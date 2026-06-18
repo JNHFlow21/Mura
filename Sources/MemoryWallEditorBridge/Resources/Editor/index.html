@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Desktop Memory Wall Editor</title>
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; background: #fff8df; color: #111827; font-family: "Marker Felt", "Chalkboard SE", "Comic Sans MS", cursive; }
+    #wall { min-height: 100vh; padding: 56px 72px; box-sizing: border-box; background-image: radial-gradient(rgba(17,24,39,.08) 1px, transparent 1px); background-size: 28px 28px; }
+    h1 { font-size: 92px; margin: 0 0 32px; letter-spacing: 1px; }
+    textarea { width: 100%; min-height: 58vh; border: 6px solid #111827; border-radius: 28px; background: rgba(255,255,255,.42); padding: 34px; box-sizing: border-box; color: #111827; font: 72px/1.35 "Marker Felt", "Chalkboard SE", cursive; outline: none; resize: vertical; }
+    .hint { font: 26px system-ui; opacity: .62; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <main id="wall">
+    <h1>Desktop Memory Wall</h1>
+    <textarea id="text" placeholder="写下你最重要的提醒……"></textarea>
+    <div class="hint">Local Excalidraw-like editor shell. Save from the native menu bar window.</div>
+  </main>
+  <script>
+    const textarea = document.getElementById('text');
+    window.memoryWallLoadBoard = function(json) {
+      try {
+        const board = JSON.parse(json);
+        textarea.value = (board.elements || []).filter(e => e.type === 'text').map(e => e.text).join('\n');
+      } catch (error) {
+        window.webkit?.messageHandlers?.memoryWall?.postMessage(JSON.stringify({ kind: 'error', payload: { message: String(error) } }));
+      }
+    };
+    textarea.addEventListener('input', () => {
+      window.webkit?.messageHandlers?.memoryWall?.postMessage(JSON.stringify({ kind: 'boardChanged', payload: { text: textarea.value } }));
+    });
+    window.webkit?.messageHandlers?.memoryWall?.postMessage(JSON.stringify({ kind: 'ready', payload: {} }));
+  </script>
+</body>
+</html>

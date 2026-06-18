@@ -11,7 +11,7 @@ struct DesktopMemoryWallApp: App {
         }
         .menuBarExtraStyle(.menu)
 
-        Window("Edit Desktop Memory Wall", id: "editor") {
+        WindowGroup("Desktop Memory Wall", id: "editor") {
             EditWindowScene(store: store)
                 .onAppear { store.isEditorPresented = true }
         }

@@ -16,16 +16,19 @@
     :root {
       color-scheme: light;
       --paper: #fff8df;
+      --chrome: rgba(255, 248, 223, .86);
+      --button-surface: rgba(255, 248, 223, .92);
       --ink: #111827;
       --muted: rgba(17, 24, 39, .62);
       --panel: rgba(255, 255, 255, .82);
       --line: rgba(17, 24, 39, .18);
       --accent: #b91c1c;
-      font-family: "LXGW WenKai", "STKaiti", "Kaiti SC", "PingFang SC", cursive;
+      --ui-font: "LXGW WenKai", "STKaiti", "Kaiti SC", "PingFang SC", cursive;
+      font-family: var(--ui-font);
     }
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--paper); color: var(--ink); }
-    body { font-family: "LXGW WenKai", "STKaiti", "Kaiti SC", "PingFang SC", cursive; }
+    body { font-family: var(--ui-font); }
     #app { width: 100vw; height: 100vh; display: grid; grid-template-rows: auto 1fr; background: #f7f0dc; }
     #toolbar {
       height: 54px;
@@ -33,21 +36,21 @@
       align-items: center;
       gap: 8px;
       padding: 8px 12px;
-      background: rgba(255, 248, 223, .86);
+      background: var(--chrome);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(16px);
       user-select: none;
     }
-    .brand { font: 15px/1.1 system-ui, sans-serif; color: var(--muted); margin: 0 6px 0 4px; white-space: nowrap; }
+    .brand { font: 15px/1.1 var(--ui-font); color: var(--muted); margin: 0 6px 0 4px; white-space: nowrap; }
     .spacer { flex: 1; }
     button {
       border: 1px solid var(--line);
       border-radius: 12px;
-      background: var(--panel);
+      background: var(--button-surface);
       color: var(--ink);
       height: 36px;
       padding: 0 12px;
-      font: 14px/1 system-ui, sans-serif;
+      font: 14px/1 var(--ui-font);
       cursor: pointer;
     }
     button.active { background: #111827; color: #fff8df; border-color: #111827; }
@@ -65,13 +68,14 @@
       padding: 0;
       display: inline-grid;
       place-items: center;
+      background: var(--button-surface);
     }
     .toolGlyph {
       display: inline-grid;
       place-items: center;
       width: 26px;
       height: 26px;
-      font: 700 23px/1 ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+      font: 700 23px/1 var(--ui-font);
     }
     .toolbarIcon {
       width: 26px;
@@ -85,6 +89,12 @@
     }
     .historyIcon {
       transform: translateY(-2px);
+    }
+    button.toolButton.active,
+    button.iconButton.active {
+      background: #111827;
+      color: #fff8df;
+      border-color: #111827;
     }
     #stageWrap {
       position: relative;
@@ -106,11 +116,12 @@
       left: 16px;
       top: 18px;
       bottom: 18px;
-      width: 138px;
+      width: 150px;
       z-index: 4;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      padding: 4px;
       overflow-y: auto;
       overflow-x: visible;
       pointer-events: none;
@@ -120,7 +131,7 @@
     .displayCard {
       pointer-events: auto;
       flex: 0 0 auto;
-      width: 138px;
+      width: 142px;
       height: auto;
       border: 0;
       border-radius: 18px;
@@ -139,7 +150,8 @@
       box-shadow: none;
     }
     .displayCard.selected .displayThumb {
-      box-shadow: 0 0 0 3px rgba(17,24,39,.76), 0 16px 42px rgba(17,24,39,.22), inset 0 0 0 1px rgba(17,24,39,.10);
+      border: 4px solid rgba(17,24,39,.76);
+      box-shadow: 0 16px 42px rgba(17,24,39,.22), inset 0 0 0 1px rgba(17,24,39,.10);
     }
     .displayThumb {
       width: 100%;
@@ -159,8 +171,8 @@
       border: 1px solid rgba(17,24,39,.12);
       opacity: .72;
     }
-    .displayMeta { margin-top: 8px; color: var(--ink); font: 700 12px/1.1 system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .displaySize { margin-top: 3px; font: 10px/1 system-ui, sans-serif; color: rgba(17,24,39,.56); }
+    .displayMeta { margin-top: 8px; color: var(--ink); font: 700 12px/1.1 var(--ui-font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .displaySize { margin-top: 3px; font: 10px/1 var(--ui-font); color: rgba(17,24,39,.56); }
     .displayBadge {
       position: absolute;
       right: 7px;
@@ -173,7 +185,7 @@
       place-items: center;
       background: #111827;
       color: #fff8df;
-      font: 700 10px/1 system-ui, sans-serif;
+      font: 700 10px/1 var(--ui-font);
     }
     canvas { display: block; width: 100%; height: 100%; cursor: crosshair; outline: none; }
     #textEditor {
@@ -191,11 +203,11 @@
       color: var(--ink);
       outline: none;
       padding: 0;
-      font-family: "LXGW WenKai", "STKaiti", "Kaiti SC", "PingFang SC", cursive;
+      font-family: var(--ui-font);
       line-height: 1.18;
       white-space: pre;
     }
-    #status { margin-left: 8px; color: var(--muted); font: 13px system-ui, sans-serif; min-width: 120px; }
+    #status { margin-left: 8px; color: var(--muted); font: 13px var(--ui-font); min-width: 120px; }
   </style>
 </head>
 <body>

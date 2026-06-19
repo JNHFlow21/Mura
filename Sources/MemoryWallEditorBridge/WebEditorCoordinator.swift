@@ -13,7 +13,7 @@ public final class WebEditorCoordinator: NSObject, WKScriptMessageHandler {
     }
 
     func markNativeBoardLoadStarted(_ json: String) -> Bool {
-        guard lastLoadedBoardJSON != json else { return false }
+        guard lastLoadedBoardJSON == nil else { return false }
         lastLoadedBoardJSON = json
         return true
     }

@@ -98,6 +98,7 @@ final class EditorBridgeTests: XCTestCase {
         let coordinator = WebEditorCoordinator()
         XCTAssertTrue(coordinator.markNativeBoardLoadStarted("board-json"))
         XCTAssertFalse(coordinator.markNativeBoardLoadStarted("board-json"))
+        XCTAssertFalse(coordinator.markNativeBoardLoadStarted("newer-native-json"))
         XCTAssertEqual(coordinator.lastLoadedBoardJSON, "board-json")
     }
 

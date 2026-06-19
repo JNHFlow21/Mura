@@ -160,7 +160,7 @@ final class AppStateStore: ObservableObject {
             statusMessage = "Canvas ready"
             lastError = nil
         case .boardChanged:
-            break
+            updateSelectedDisplay(from: message.payload)
         case .exportPNG:
             saveExportAndApplyWallpaper(message)
         case .cancel:
@@ -168,6 +168,13 @@ final class AppStateStore: ObservableObject {
         case .error:
             lastError = message.payload["message"]?.stringValue ?? "Editor reported an unknown error"
             statusMessage = "Editor error"
+        }
+    }
+
+    private func updateSelectedDisplay(from payload: [String: JSONValue]) {
+        guard let displayID = payload["selectedDisplayID"]?.stringValue, !displayID.isEmpty else { return }
+        if displays.contains(where: { $0.id == displayID }) || editorBoardsByDisplayID[displayID] != nil {
+            selectedDisplayID = displayID
         }
     }
 
@@ -192,9 +199,9 @@ final class AppStateStore: ObservableObject {
             let output = RenderOutput(fileURL: appliedWallpaperURL, width: exportedBoard.canvasWidth, height: exportedBoard.canvasHeight, purpose: .wallpaper, byteCount: pngData.count)
             _ = try wallpaperService.apply(render: output, display: display, confirm: true, actor: "app")
             board = exportedBoard
-            editorBoard = nil
-            editorBoardsByDisplayID = [:]
-            isEditorPresented = false
+            editorBoard = exportedBoard
+            selectedDisplayID = display.id
+            editorBoardsByDisplayID = [display.id: exportedBoard]
             statusMessage = "Saved canvas and applied wallpaper"
             lastError = nil
         } catch {
@@ -205,11 +212,11 @@ final class AppStateStore: ObservableObject {
 
     func saveDisplayExportsAndApplyWallpapers(_ exports: [EditorDisplayExport], selectedDisplayID: String) {
         do {
+            let requestedSelectedDisplayID = selectedDisplayID
             refreshDisplays()
             let displaysByID = Dictionary(uniqueKeysWithValues: displays.map { ($0.id, $0) })
             try layout.ensureDirectories()
             var savedBoards: [String: BoardDocument] = [:]
-            var selectedBoard: BoardDocument?
             var appliedCount = 0
 
             for export in exports {
@@ -229,9 +236,8 @@ final class AppStateStore: ObservableObject {
                 try boardStore.saveBoard(exportedBoard, for: display, actor: "app", reason: "editor.display-export")
                 let appliedWallpaperURL = layout.wallpaperRenderURL(forDisplayID: display.id)
                 try pngData.write(to: appliedWallpaperURL, options: [.atomic])
-                if export.displayID == selectedDisplayID {
+                if export.displayID == requestedSelectedDisplayID {
                     try pngData.write(to: layout.latestRenderURL, options: [.atomic])
-                    selectedBoard = exportedBoard
                 }
                 let output = RenderOutput(fileURL: appliedWallpaperURL, width: exportedBoard.canvasWidth, height: exportedBoard.canvasHeight, purpose: .wallpaper, byteCount: pngData.count)
                 _ = try wallpaperService.apply(render: output, display: display, confirm: true, actor: "app")
@@ -239,16 +245,14 @@ final class AppStateStore: ObservableObject {
                 appliedCount += 1
             }
 
-            if selectedBoard == nil {
-                selectedBoard = exports.first?.board
-            }
+            let selectedBoard = savedBoards[requestedSelectedDisplayID] ?? savedBoards.values.first
             if let selectedBoard {
                 try boardStore.saveActiveBoard(selectedBoard, actor: "app", reason: "editor.selected-display-export")
                 board = selectedBoard
             }
             editorBoardsByDisplayID = savedBoards
-            editorBoard = nil
-            isEditorPresented = false
+            editorBoard = selectedBoard
+            self.selectedDisplayID = requestedSelectedDisplayID
             statusMessage = "Saved \(appliedCount) display wallpaper\(appliedCount == 1 ? "" : "s")"
             lastError = nil
         } catch {

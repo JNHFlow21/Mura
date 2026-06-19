@@ -4,7 +4,9 @@ cd "$(dirname "$0")/.."
 if [ ! -x .build/app/DesktopMemoryWallApp.app/Contents/MacOS/DesktopMemoryWallApp ]; then
   script/package_app.sh >/dev/null
 fi
-pkill -f DesktopMemoryWallApp || true
-nohup "$PWD/.build/app/DesktopMemoryWallApp.app/Contents/MacOS/DesktopMemoryWallApp" >/tmp/DesktopMemoryWallApp.log 2>&1 &
+pkill -x DesktopMemoryWallApp || true
 sleep 1
-pgrep -fl DesktopMemoryWallApp >/dev/null
+/usr/bin/open -n "$PWD/.build/app/DesktopMemoryWallApp.app"
+sleep 1
+pgrep -x DesktopMemoryWallApp >/dev/null
+echo "Opened $PWD/.build/app/DesktopMemoryWallApp.app"

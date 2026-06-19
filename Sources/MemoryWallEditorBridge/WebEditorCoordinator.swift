@@ -12,6 +12,18 @@ public final class WebEditorCoordinator: NSObject, WKScriptMessageHandler {
         self.onError = onError
     }
 
+    func markNativeBoardLoadStarted(_ json: String) -> Bool {
+        guard lastLoadedBoardJSON != json else { return false }
+        lastLoadedBoardJSON = json
+        return true
+    }
+
+    func markNativeBoardLoadFailed(_ json: String) {
+        if lastLoadedBoardJSON == json {
+            lastLoadedBoardJSON = nil
+        }
+    }
+
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? String else {
             onError(EditorBridgeError.invalidMessage("Expected JSON string body"))

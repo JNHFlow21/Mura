@@ -21,6 +21,20 @@ final class EditorBridgeTests: XCTestCase {
         XCTAssertEqual(try EditorExportCodec.pngData(fromDataURL: try XCTUnwrap(message.pngDataURL)), Data("ABC".utf8))
     }
 
+    func testDecodesExportMessageWithTextAndFreedrawElements() throws {
+        var board = BoardDocument.defaultMemoryWall()
+        board.addText("WKTEST", x: 120, y: 160)
+        board.addStroke(points: [BoardPoint(x: 10, y: 10), BoardPoint(x: 80, y: 60), BoardPoint(x: 120, y: 40)])
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let boardJSON = String(data: try encoder.encode(board), encoding: .utf8)!
+        let json = "{\"kind\":\"exportPNG\",\"board\":\(boardJSON),\"payload\":{\"pngDataURL\":\"data:image/png;base64,QUJD\"}}"
+        let message = try EditorBridgeMessage.decode(json: json)
+        XCTAssertEqual(message.board?.elements.map(\.type), [.text, .freedraw])
+        XCTAssertEqual(message.board?.elements.first?.text, "WKTEST")
+        XCTAssertEqual(message.board?.elements.last?.extra["points"]?.arrayValue?.count, 3)
+    }
+
     func testDecodesEditorDatesWithFractionalSeconds() throws {
         let json = """
         {
@@ -49,6 +63,23 @@ final class EditorBridgeTests: XCTestCase {
     func testRejectsInvalidBridgeMessages() {
         XCTAssertThrowsError(try EditorBridgeMessage.decode(json: "not-json"))
         XCTAssertThrowsError(try EditorExportCodec.pngData(fromDataURL: "data:image/jpeg;base64,AAAA"))
+    }
+
+    @MainActor
+    func testCoordinatorMarksCachedNativeBoardLoadsAsLoaded() {
+        let coordinator = WebEditorCoordinator()
+        XCTAssertTrue(coordinator.markNativeBoardLoadStarted("board-json"))
+        XCTAssertFalse(coordinator.markNativeBoardLoadStarted("board-json"))
+        XCTAssertEqual(coordinator.lastLoadedBoardJSON, "board-json")
+    }
+
+    @MainActor
+    func testCoordinatorAllowsRetryAfterNativeBoardLoadFailure() {
+        let coordinator = WebEditorCoordinator()
+        XCTAssertTrue(coordinator.markNativeBoardLoadStarted("board-json"))
+        coordinator.markNativeBoardLoadFailed("board-json")
+        XCTAssertNil(coordinator.lastLoadedBoardJSON)
+        XCTAssertTrue(coordinator.markNativeBoardLoadStarted("board-json"))
     }
 
     func testBundledEditorAndFontAssetsExist() throws {

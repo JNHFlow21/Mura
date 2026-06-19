@@ -20,6 +20,11 @@ public struct WorkspaceLayout: Equatable, Sendable {
     public var rendersDirectory: URL { root.appendingPathComponent("renders", isDirectory: true) }
     public var previewsDirectory: URL { rendersDirectory.appendingPathComponent("previews", isDirectory: true) }
     public var latestRenderURL: URL { rendersDirectory.appendingPathComponent("latest-wallpaper.png") }
+    public func wallpaperRenderURL(id: String = UUID().uuidString, date: Date = Date()) -> URL {
+        let milliseconds = Int(date.timeIntervalSince1970 * 1000)
+        let safeID = id.replacingOccurrences(of: "/", with: "-")
+        return rendersDirectory.appendingPathComponent("wallpaper-\(milliseconds)-\(safeID).png")
+    }
     public var snapshotsDirectory: URL { root.appendingPathComponent("snapshots", isDirectory: true) }
     public var boardSnapshotsDirectory: URL { snapshotsDirectory.appendingPathComponent("boards", isDirectory: true) }
     public var wallpaperSnapshotsDirectory: URL { snapshotsDirectory.appendingPathComponent("wallpapers", isDirectory: true) }

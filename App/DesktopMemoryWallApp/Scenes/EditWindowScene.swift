@@ -8,7 +8,7 @@ struct EditWindowScene: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            WebEditorView(board: store.board) { message in
+            WebEditorView(board: store.editorBoard ?? store.board) { message in
                 Task { @MainActor in store.handleEditorMessage(message) }
             } onError: { error in
                 Task { @MainActor in store.lastError = error.localizedDescription }
@@ -27,6 +27,7 @@ struct EditWindowScene: View {
         .onChange(of: store.isEditorPresented) { _, presented in
             if !presented { dismiss() }
         }
-        .onDisappear { store.isEditorPresented = false }
+        .onAppear { store.presentEditorWindow() }
+        .onDisappear { store.editorWindowDidDisappear() }
     }
 }

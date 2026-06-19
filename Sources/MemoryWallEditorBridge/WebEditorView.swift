@@ -40,23 +40,31 @@ public struct WebEditorView: NSViewRepresentable {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         guard let data = try? encoder.encode(board), let json = String(data: data, encoding: .utf8) else { return }
-        guard context.coordinator.lastLoadedBoardJSON != json else { return }
+        guard context.coordinator.markNativeBoardLoadStarted(json) else { return }
         let escaped = json.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "`", with: "\\`")
         let script = """
         (function() {
           const json = `\(escaped)`;
+          const editorDOMReady = Boolean(document.getElementById('scene') && document.getElementById('textEditor'));
           window.__memoryWallNativeBoardJSON = json;
           if (window.memoryWallLoadBoard) {
             window.memoryWallLoadBoard(json);
-            return true;
+            return 'loaded';
           }
-          return false;
+          if (location.protocol === 'file:' || editorDOMReady) {
+            return 'cached';
+          }
+          return 'pending';
         })();
         """
         webView.evaluateJavaScript(script) { result, error in
-            if let error { onError(error); return }
-            if (result as? Bool) == true {
-                context.coordinator.lastLoadedBoardJSON = json
+            if let error {
+                context.coordinator.markNativeBoardLoadFailed(json)
+                onError(error)
+                return
+            }
+            if let status = result as? String, status == "pending" {
+                context.coordinator.markNativeBoardLoadFailed(json)
             }
         }
     }

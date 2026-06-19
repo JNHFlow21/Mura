@@ -49,6 +49,16 @@ final class WorkspaceStoreTests: XCTestCase {
         XCTAssertEqual(raw.split(separator: "\n").count, 2)
     }
 
+    func testWallpaperRenderURLIsUniqueAndKeepsLatestRenderStable() {
+        let layout = tempLayout()
+        let first = layout.wallpaperRenderURL(id: "first", date: Date(timeIntervalSince1970: 1))
+        let second = layout.wallpaperRenderURL(id: "second", date: Date(timeIntervalSince1970: 2))
+        XCTAssertNotEqual(first, second)
+        XCTAssertEqual(layout.latestRenderURL.lastPathComponent, "latest-wallpaper.png")
+        XCTAssertEqual(first.deletingLastPathComponent(), layout.rendersDirectory)
+        XCTAssertTrue(first.lastPathComponent.hasPrefix("wallpaper-"))
+    }
+
     private func tempLayout() -> WorkspaceLayout {
         WorkspaceLayout(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true))
     }

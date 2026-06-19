@@ -53,7 +53,45 @@
     button.active { background: #111827; color: #fff8df; border-color: #111827; }
     button.primary { background: #111827; color: #fff8df; border-color: #111827; }
     button.ghost { background: transparent; }
-    #stageWrap { position: relative; overflow: auto; padding: 32px; display: grid; place-items: start center; }
+    button.toolButton,
+    button.iconButton {
+      width: 48px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+    }
+    .toolGlyph {
+      display: inline-grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      font: 700 23px/1 ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+    }
+    .handGlyph {
+      font-size: 21px;
+      filter: saturate(.86);
+    }
+    .toolbarIcon {
+      width: 26px;
+      height: 26px;
+      display: block;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .historyIcon {
+      transform: translateY(-2px);
+    }
+    #stageWrap {
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
     #canvasBox {
       position: relative;
       background: var(--paper);
@@ -61,7 +99,7 @@
       border-radius: 3px;
       transform-origin: top left;
     }
-    canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+    canvas { display: block; width: 100%; height: 100%; cursor: crosshair; outline: none; }
     #textEditor {
       position: absolute;
       z-index: 5;
@@ -70,32 +108,52 @@
       min-height: 78px;
       resize: both;
       overflow: hidden;
-      background: rgba(255,255,255,.30);
-      border: 2px dashed rgba(17,24,39,.42);
-      border-radius: 10px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, .52), 0 0 0 6px rgba(255,255,255,.42);
       color: var(--ink);
       outline: none;
-      padding: 4px 8px;
+      padding: 0;
       font-family: "LXGW WenKai", "STKaiti", "Kaiti SC", "PingFang SC", cursive;
-      line-height: 1.2;
+      line-height: 1.18;
+      white-space: pre;
     }
     #status { margin-left: 8px; color: var(--muted); font: 13px system-ui, sans-serif; min-width: 120px; }
-    #hint {
-      position: fixed; left: 16px; bottom: 14px; color: rgba(17,24,39,.48);
-      font: 13px system-ui, sans-serif; pointer-events: none;
-    }
   </style>
 </head>
 <body>
   <div id="app">
     <div id="toolbar">
       <span class="brand">Memory Wall</span>
-      <button data-tool="select" class="active">选择</button>
-      <button data-tool="text">文字</button>
-      <button data-tool="pen">画笔</button>
-      <button data-tool="eraser">橡皮</button>
-      <button id="undo">撤销</button>
-      <button id="redo">重做</button>
+      <button data-tool="select" class="toolButton active" title="选择" aria-label="选择"><span class="toolGlyph handGlyph" aria-hidden="true">✋</span></button>
+      <button data-tool="text" class="toolButton" title="文字" aria-label="文字"><span class="toolGlyph" aria-hidden="true">T</span></button>
+      <button data-tool="pen" class="toolButton" title="画笔" aria-label="画笔">
+        <svg class="toolbarIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 20l4.5-1.2L18.6 8.7a2.2 2.2 0 0 0-3.1-3.1L5.4 15.7 4 20Z" />
+          <path d="M13.8 7.3l2.9 2.9" />
+          <path d="M4 20h5" />
+        </svg>
+      </button>
+      <button data-tool="eraser" class="toolButton" title="橡皮" aria-label="橡皮">
+        <svg class="toolbarIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4.5 15.5 13 7a2.8 2.8 0 0 1 4 0l2 2a2.8 2.8 0 0 1 0 4l-6.5 6.5H8.5l-4-4Z" />
+          <path d="M11.6 8.4 17.6 14.4" />
+          <path d="M8.5 19.5H21" />
+        </svg>
+      </button>
+      <button id="undo" class="iconButton" title="撤销" aria-label="撤销">
+        <svg class="toolbarIcon historyIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 7 5 11l4 4" />
+          <path d="M5 11h10a5 5 0 0 1 0 10h-4" />
+        </svg>
+      </button>
+      <button id="redo" class="iconButton" title="重做" aria-label="重做">
+        <svg class="toolbarIcon historyIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 7l4 4-4 4" />
+          <path d="M19 11H9a5 5 0 0 0 0 10h4" />
+        </svg>
+      </button>
       <span id="status">字体加载中…</span>
       <span class="spacer"></span>
       <button id="cancel" class="ghost">取消</button>
@@ -104,18 +162,19 @@
     <div id="stageWrap">
       <div id="canvasBox">
         <canvas id="scene"></canvas>
-        <textarea id="textEditor" spellcheck="false"></textarea>
+        <textarea id="textEditor" spellcheck="false" wrap="off"></textarea>
       </div>
     </div>
   </div>
-  <div id="hint">文字工具：点击画布输入；画笔：拖动涂鸦；选择：拖动元素；Delete 删除。</div>
   <script>
     const DEFAULT_WIDTH = 1920;
     const DEFAULT_HEIGHT = 1080;
     const DEFAULT_BG = '#fff8df';
     const DEFAULT_INK = '#111827';
     const FONT = 'LXGW WenKai';
+    const STAGE_PADDING = 16;
     const canvas = document.getElementById('scene');
+    canvas.tabIndex = 0;
     const ctx = canvas.getContext('2d');
     const box = document.getElementById('canvasBox');
     const wrap = document.getElementById('stageWrap');
@@ -167,8 +226,8 @@
     }
     function signalChanged() { board.metadata.updatedAt = nowISO(); post('boardChanged', {}, false); }
     function resizeCanvas() {
-      const availableW = Math.max(480, wrap.clientWidth - 64);
-      const availableH = Math.max(320, wrap.clientHeight - 64);
+      const availableW = Math.max(480, wrap.clientWidth - STAGE_PADDING * 2);
+      const availableH = Math.max(320, wrap.clientHeight - STAGE_PADDING * 2);
       const scale = Math.min(availableW / board.canvasWidth, availableH / board.canvasHeight, 1);
       const cssW = Math.max(1, Math.round(board.canvasWidth * scale));
       const cssH = Math.max(1, Math.round(board.canvasHeight * scale));
@@ -177,6 +236,7 @@
       canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
       canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
       ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+      autoSizeTextEditor();
       render();
     }
     function pointerToBoard(event) {
@@ -188,6 +248,19 @@
       return { x: point.x * rect.width / board.canvasWidth, y: point.y * rect.height / board.canvasHeight };
     }
     function textLines(text) { return String(text || '').split('\n'); }
+    function autoSizeTextEditor() {
+      if (!editorElementId || textEditor.style.display === 'none') return;
+      const element = board.elements.find(e => e.id === editorElementId);
+      if (!element) return;
+      const scaleX = canvas.getBoundingClientRect().width / board.canvasWidth;
+      const minWidth = Math.max(180, (element.width || 760) * scaleX);
+      textEditor.style.width = 'auto';
+      textEditor.style.height = 'auto';
+      const desiredWidth = Math.ceil(textEditor.scrollWidth + 4);
+      const desiredHeight = Math.ceil(textEditor.scrollHeight + 4);
+      textEditor.style.width = Math.max(minWidth, desiredWidth) + 'px';
+      textEditor.style.height = Math.max(78, desiredHeight) + 'px';
+    }
     function drawTextElement(target, element) {
       target.save();
       target.fillStyle = element.strokeColor || DEFAULT_INK;
@@ -216,6 +289,7 @@
       target.fillStyle = board.backgroundColor || DEFAULT_BG;
       target.fillRect(0, 0, board.canvasWidth, board.canvasHeight);
       for (const element of board.elements) {
+        if (target === ctx && editorElementId === element.id) continue;
         if (element.type === 'text') drawTextElement(target, element);
         if (element.type === 'freedraw' || element.type === 'line' || element.type === 'arrow') drawStrokeElement(target, element);
         if (selectedId === element.id && target === ctx) drawSelection(target, element);
@@ -227,12 +301,33 @@
       target.strokeRect(element.x - 8, element.y - 8, Math.max(28, element.width + 16), Math.max(28, element.height + 16));
       target.restore();
     }
-    function hitTest(point) {
+    function distanceToSegment(point, start, end) {
+      const dx = end.x - start.x, dy = end.y - start.y;
+      const lengthSquared = dx * dx + dy * dy;
+      if (lengthSquared === 0) return Math.hypot(point.x - start.x, point.y - start.y);
+      const t = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared));
+      return Math.hypot(point.x - (start.x + t * dx), point.y - (start.y + t * dy));
+    }
+    function strokeContainsPoint(point, points, tolerance) {
+      if (!points.length) return false;
+      if (points.length === 1) return Math.hypot(point.x - points[0].x, point.y - points[0].y) <= tolerance;
+      for (let index = 1; index < points.length; index += 1) {
+        if (distanceToSegment(point, points[index - 1], points[index]) <= tolerance) return true;
+      }
+      return false;
+    }
+    function inBox(point, element, pad = 0) {
+      return point.x >= element.x - pad && point.x <= element.x + element.width + pad && point.y >= element.y - pad && point.y <= element.y + element.height + pad;
+    }
+    function hitTest(point, mode = 'select') {
+      const strokeTolerance = mode === 'eraser' ? 56 : 34;
+      const textPad = mode === 'eraser' ? 24 : 12;
       for (let i = board.elements.length - 1; i >= 0; i--) {
         const e = board.elements[i];
-        if (e.type === 'text' && point.x >= e.x - 12 && point.x <= e.x + e.width + 12 && point.y >= e.y - 12 && point.y <= e.y + e.height + 12) return e;
+        if (e.type === 'text' && inBox(point, e, textPad)) return e;
         const pts = e.extra?.points || [];
-        if (pts.some(p => Math.hypot(p.x - point.x, p.y - point.y) < Math.max(18, e.fontSize * 1.8))) return e;
+        if (pts.length && strokeContainsPoint(point, pts, Math.max(strokeTolerance, (e.fontSize || 8) * 3))) return e;
+        if (!pts.length && e.type !== 'text' && inBox(point, e, strokeTolerance)) return e;
       }
       return null;
     }
@@ -255,7 +350,13 @@
       textEditor.style.height = Math.max(78, element.height * scaleX) + 'px';
       textEditor.style.fontSize = Math.max(20, element.fontSize * scaleX) + 'px';
       textEditor.value = element.text || '';
-      textEditor.focus(); render();
+      autoSizeTextEditor();
+      requestAnimationFrame(() => {
+        textEditor.focus({ preventScroll: true });
+        textEditor.setSelectionRange(textEditor.value.length, textEditor.value.length);
+        autoSizeTextEditor();
+      });
+      render();
     }
     function commitTextEditor() {
       if (!editorElementId) return;
@@ -270,11 +371,23 @@
       }
       editorElementId = null; textEditor.style.display = 'none'; signalChanged(); render();
     }
+    function deleteSelected() {
+      if (!selectedId) return false;
+      pushUndo();
+      board.elements = board.elements.filter(e => e.id !== selectedId);
+      selectedId = null;
+      signalChanged();
+      render();
+      statusEl.textContent = '已删除';
+      return true;
+    }
     canvas.addEventListener('pointerdown', event => {
-      const point = pointerToBoard(event); canvas.setPointerCapture(event.pointerId);
-      if (tool === 'text') { startTextEditor(point); return; }
-      const hit = hitTest(point); selectedId = hit?.id || null;
-      if (tool === 'eraser') { if (hit) { pushUndo(); board.elements = board.elements.filter(e => e.id !== hit.id); signalChanged(); } render(); return; }
+      const point = pointerToBoard(event);
+      if (tool === 'text') { event.preventDefault(); event.stopPropagation(); startTextEditor(point); return; }
+      canvas.focus({ preventScroll: true });
+      canvas.setPointerCapture(event.pointerId);
+      const hit = hitTest(point, tool === 'eraser' ? 'eraser' : 'select'); selectedId = hit?.id || null;
+      if (tool === 'eraser') { if (hit) { pushUndo(); board.elements = board.elements.filter(e => e.id !== hit.id); selectedId = null; signalChanged(); statusEl.textContent = '已擦除'; } render(); return; }
       if (tool === 'pen') { pushUndo(); drawing = true; currentStroke = { id: uuid(), type: 'freedraw', x: point.x, y: point.y, width: 1, height: 1, text: '', fontSize: 8, strokeColor: DEFAULT_INK, backgroundColor: 'transparent', roughness: 1, extra: { points: [point] } }; board.elements.push(currentStroke); render(); return; }
       if (tool === 'select' && hit) { pushUndo(); dragging = true; dragOffset = { x: point.x - hit.x, y: point.y - hit.y }; }
       render();
@@ -296,15 +409,20 @@
     });
     canvas.addEventListener('pointerup', () => { if (drawing || dragging) signalChanged(); drawing = false; dragging = false; currentStroke = null; });
     canvas.addEventListener('dblclick', event => { const hit = hitTest(pointerToBoard(event)); if (hit?.type === 'text') startTextEditor({ x: hit.x, y: hit.y }, hit); });
+    textEditor.addEventListener('input', autoSizeTextEditor);
     textEditor.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') commitTextEditor(); event.stopPropagation(); });
     textEditor.addEventListener('blur', commitTextEditor);
-    window.addEventListener('keydown', event => {
-      if (event.key === 'Delete' && selectedId) { pushUndo(); board.elements = board.elements.filter(e => e.id !== selectedId); selectedId = null; signalChanged(); render(); }
+    function isDeleteKey(event) {
+      return event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 8 || event.keyCode === 46;
+    }
+    document.addEventListener('keydown', event => {
+      if (document.activeElement === textEditor) return;
+      if (isDeleteKey(event) && selectedId) { event.preventDefault(); event.stopPropagation(); deleteSelected(); return; }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.shiftKey ? redo() : undo(); }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); }
-    });
-    function undo() { commitTextEditor(); const previous = undoStack.pop(); if (!previous) return; redoStack.push(clone(board)); board = normalizeBoard(previous); selectedId = null; signalChanged(); resizeCanvas(); }
-    function redo() { commitTextEditor(); const next = redoStack.pop(); if (!next) return; undoStack.push(clone(board)); board = normalizeBoard(next); selectedId = null; signalChanged(); resizeCanvas(); }
+    }, true);
+    function undo() { commitTextEditor(); const previous = undoStack.pop(); if (!previous) { statusEl.textContent = '没有可撤销内容'; return; } redoStack.push(clone(board)); board = normalizeBoard(previous); selectedId = null; signalChanged(); statusEl.textContent = '已撤销'; resizeCanvas(); }
+    function redo() { commitTextEditor(); const next = redoStack.pop(); if (!next) { statusEl.textContent = '没有可重做内容'; return; } undoStack.push(clone(board)); board = normalizeBoard(next); selectedId = null; signalChanged(); statusEl.textContent = '已重做'; resizeCanvas(); }
     async function exportPNG() {
       commitTextEditor();
       await document.fonts.ready;

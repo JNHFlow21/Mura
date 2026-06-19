@@ -11,6 +11,7 @@ final class AppStateStore: ObservableObject {
     @Published var board: BoardDocument = .defaultMemoryWall()
     @Published var preferences = MemoryWallPreferences()
     @Published var isEditorPresented = false
+    @Published var editorBoard: BoardDocument?
     @Published var statusMessage = "Ready"
     @Published var lastError: String?
 
@@ -53,10 +54,33 @@ final class AppStateStore: ObservableObject {
     func openEditor() {
         if !isEditorPresented {
             reload()
-            prepareBlankBoardForActiveDisplayIfNeeded()
+            prepareBlankDraftForActiveDisplay()
             isEditorPresented = true
             NSApp.activate(ignoringOtherApps: true)
         }
+    }
+
+    func presentEditorWindow() {
+        if editorBoard == nil {
+            reload()
+            prepareBlankDraftForActiveDisplay()
+        }
+        isEditorPresented = true
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func editorWindowDidDisappear() {
+        if isEditorPresented {
+            editorBoard = nil
+            isEditorPresented = false
+        }
+    }
+
+    private func prepareBlankDraftForActiveDisplay() {
+        let display = displayService.mainDisplay()
+        editorBoard = .blank(display: display)
+        statusMessage = "Blank canvas ready"
+        lastError = nil
     }
 
     private func prepareBlankBoardForActiveDisplayIfNeeded() {
@@ -90,6 +114,7 @@ final class AppStateStore: ObservableObject {
 
     func cancelEditor() {
         isEditorPresented = false
+        editorBoard = nil
         reload()
         statusMessage = "Edit cancelled"
     }
@@ -100,7 +125,7 @@ final class AppStateStore: ObservableObject {
             statusMessage = "Canvas ready"
             lastError = nil
         case .boardChanged:
-            statusMessage = "Editing canvas"
+            break
         case .exportPNG:
             saveExportAndApplyWallpaper(message)
         case .cancel:
@@ -123,9 +148,12 @@ final class AppStateStore: ObservableObject {
             try boardStore.saveActiveBoard(exportedBoard, actor: "app", reason: "editor.canvas-export")
             try layout.ensureDirectories()
             try pngData.write(to: layout.latestRenderURL, options: [.atomic])
-            let output = RenderOutput(fileURL: layout.latestRenderURL, width: exportedBoard.canvasWidth, height: exportedBoard.canvasHeight, purpose: .wallpaper, byteCount: pngData.count)
+            let appliedWallpaperURL = layout.wallpaperRenderURL()
+            try pngData.write(to: appliedWallpaperURL, options: [.atomic])
+            let output = RenderOutput(fileURL: appliedWallpaperURL, width: exportedBoard.canvasWidth, height: exportedBoard.canvasHeight, purpose: .wallpaper, byteCount: pngData.count)
             _ = try wallpaperService.apply(render: output, display: display, confirm: true, actor: "app")
             board = exportedBoard
+            editorBoard = nil
             isEditorPresented = false
             statusMessage = "Saved canvas and applied wallpaper"
             lastError = nil

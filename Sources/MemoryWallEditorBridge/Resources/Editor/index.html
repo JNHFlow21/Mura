@@ -205,10 +205,10 @@
       min-height: 78px;
       resize: both;
       overflow: hidden;
-      background: transparent;
-      border: 0;
-      border-radius: 0;
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, .52), 0 0 0 6px rgba(255,255,255,.42);
+      background: rgba(255, 248, 223, .22);
+      border: 2px dashed rgba(17,24,39,.36);
+      border-radius: 18px;
+      box-shadow: 0 14px 36px rgba(17,24,39,.08), 0 0 0 6px rgba(255,248,223,.38);
       color: var(--ink);
       outline: none;
       padding: 0;
@@ -521,8 +521,18 @@
       target.restore();
     }
     function drawSelection(target, element) {
-      target.save(); target.strokeStyle = 'rgba(29,78,216,.85)'; target.lineWidth = 2; target.setLineDash([8, 8]);
-      target.strokeRect(element.x - 8, element.y - 8, Math.max(28, element.width + 16), Math.max(28, element.height + 16));
+      target.save(); target.strokeStyle = 'rgba(17,24,39,.42)'; target.lineWidth = 2; target.setLineDash([12, 10]);
+      const x = element.x - 10;
+      const y = element.y - 10;
+      const width = Math.max(34, element.width + 20);
+      const height = Math.max(34, element.height + 20);
+      if (typeof target.roundRect === 'function') {
+        target.beginPath();
+        target.roundRect(x, y, width, height, 18);
+        target.stroke();
+      } else {
+        target.strokeRect(x, y, width, height);
+      }
       target.restore();
     }
     function distanceToSegment(point, start, end) {

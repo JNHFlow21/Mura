@@ -99,7 +99,7 @@
     #stageWrap {
       position: relative;
       overflow: hidden;
-      padding: 16px 16px 16px 166px;
+      padding: 22px 22px 22px 236px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -113,15 +113,16 @@
     }
     #displayRail {
       position: absolute;
-      left: 16px;
-      top: 18px;
-      bottom: 18px;
-      width: 150px;
+      left: 24px;
+      top: 24px;
+      bottom: 24px;
+      width: 168px;
       z-index: 4;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: 4px;
+      padding: 4px 18px 4px 4px;
+      border-right: 1px solid rgba(17,24,39,.10);
       overflow-y: auto;
       overflow-x: visible;
       pointer-events: none;
@@ -270,9 +271,9 @@
     const DEFAULT_BG = '#fff8df';
     const DEFAULT_INK = '#111827';
     const FONT = 'LXGW WenKai';
-    const STAGE_PADDING_LEFT = 166;
-    const STAGE_PADDING_RIGHT = 16;
-    const STAGE_PADDING_Y = 16;
+    const STAGE_PADDING_LEFT = 236;
+    const STAGE_PADDING_RIGHT = 22;
+    const STAGE_PADDING_Y = 22;
     const canvas = document.getElementById('scene');
     canvas.tabIndex = 0;
     const ctx = canvas.getContext('2d');

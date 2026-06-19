@@ -11,14 +11,18 @@ struct DesktopMemoryWallApp: App {
         }
         .menuBarExtraStyle(.menu)
 
-        WindowGroup("Desktop Memory Wall", id: "editor") {
+        Window("Desktop Memory Wall", id: "editor") {
             EditWindowScene(store: store)
                 .onAppear { store.isEditorPresented = true }
         }
-        .defaultSize(width: 1280, height: 820)
+        .defaultSize(width: EditorWindowMetrics.fixedFrameSize.width, height: EditorWindowMetrics.fixedFrameSize.height)
 
         Settings {
             SettingsSceneView(store: store)
         }
     }
+}
+
+enum EditorWindowMetrics {
+    static let fixedFrameSize = CGSize(width: 1295, height: 719)
 }

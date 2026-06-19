@@ -1,3 +1,4 @@
+import AppKit
 import MemoryWallCore
 import MemoryWallEditorBridge
 import SwiftUI
@@ -29,10 +30,43 @@ struct EditWindowScene: View {
             }
         }
         .frame(minWidth: 960, minHeight: 640)
+        .background(FixedEditorWindowConfigurator())
         .onChange(of: store.isEditorPresented) { _, presented in
             if !presented { dismiss() }
         }
         .onAppear { store.presentEditorWindow() }
         .onDisappear { store.editorWindowDidDisappear() }
+    }
+}
+
+private struct FixedEditorWindowConfigurator: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        DispatchQueue.main.async { configure(view.window) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async { configure(nsView.window) }
+    }
+
+    private func configure(_ window: NSWindow?) {
+        guard let window else { return }
+        let target = EditorWindowMetrics.fixedFrameSize
+        let current = window.frame
+        let targetFrame = NSRect(
+            x: current.midX - target.width / 2,
+            y: current.midY - target.height / 2,
+            width: target.width,
+            height: target.height
+        )
+        if abs(current.width - target.width) > 0.5 || abs(current.height - target.height) > 0.5 {
+            window.setFrame(targetFrame, display: true)
+        }
+        window.minSize = target
+        window.maxSize = target
+        window.isRestorable = false
+        window.styleMask.remove(.resizable)
+        window.standardWindowButton(.zoomButton)?.isEnabled = false
     }
 }

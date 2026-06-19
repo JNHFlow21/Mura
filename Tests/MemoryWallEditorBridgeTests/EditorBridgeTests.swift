@@ -35,6 +35,34 @@ final class EditorBridgeTests: XCTestCase {
         XCTAssertEqual(message.board?.elements.last?.extra["points"]?.arrayValue?.count, 3)
     }
 
+    func testDecodesDisplayExports() throws {
+        let main = DisplayProfile(id: "main", name: "Main", width: 1920, height: 1080, scale: 2, isMain: true)
+        let side = DisplayProfile(id: "side", name: "Side", width: 1280, height: 720, scale: 1, isMain: false)
+        var mainBoard = BoardDocument.blank(display: main)
+        mainBoard.addText("Main", x: 10, y: 20)
+        let sideBoard = BoardDocument.blank(display: side)
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let mainJSON = String(data: try encoder.encode(mainBoard), encoding: .utf8)!
+        let sideJSON = String(data: try encoder.encode(sideBoard), encoding: .utf8)!
+        let json = """
+        {
+          "kind":"exportPNG",
+          "board":\(mainJSON),
+          "payload":{"selectedDisplayID":"main"},
+          "displayExports":[
+            {"displayID":"main","board":\(mainJSON),"pngDataURL":"data:image/png;base64,QUJD","width":1920,"height":1080},
+            {"displayID":"side","board":\(sideJSON),"pngDataURL":"data:image/png;base64,REVG","width":1280,"height":720}
+          ]
+        }
+        """
+        let message = try EditorBridgeMessage.decode(json: json)
+        XCTAssertEqual(message.displayExports?.count, 2)
+        XCTAssertEqual(message.displayExports?.first?.displayID, "main")
+        XCTAssertEqual(message.displayExports?.last?.board.canvasWidth, 1280)
+        XCTAssertEqual(try EditorExportCodec.pngData(fromDataURL: try XCTUnwrap(message.displayExports?.last?.pngDataURL)), Data("DEF".utf8))
+    }
+
     func testDecodesEditorDatesWithFractionalSeconds() throws {
         let json = """
         {

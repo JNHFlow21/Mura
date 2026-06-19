@@ -27,11 +27,13 @@ public struct EditorBridgeMessage: Codable, Equatable, Sendable {
     public var kind: Kind
     public var board: BoardDocument?
     public var payload: [String: JSONValue]
+    public var displayExports: [EditorDisplayExport]?
 
-    public init(kind: Kind, board: BoardDocument? = nil, payload: [String: JSONValue] = [:]) {
+    public init(kind: Kind, board: BoardDocument? = nil, payload: [String: JSONValue] = [:], displayExports: [EditorDisplayExport]? = nil) {
         self.kind = kind
         self.board = board
         self.payload = payload
+        self.displayExports = displayExports
     }
 
     public static func decode(json: String) throws -> EditorBridgeMessage {
@@ -57,6 +59,22 @@ public struct EditorBridgeMessage: Codable, Equatable, Sendable {
 
     public var pngDataURL: String? { payload["pngDataURL"]?.stringValue }
 
+}
+
+public struct EditorDisplayExport: Codable, Equatable, Sendable {
+    public var displayID: String
+    public var board: BoardDocument
+    public var pngDataURL: String
+    public var width: Int
+    public var height: Int
+
+    public init(displayID: String, board: BoardDocument, pngDataURL: String, width: Int, height: Int) {
+        self.displayID = displayID
+        self.board = board
+        self.pngDataURL = pngDataURL
+        self.width = width
+        self.height = height
+    }
 }
 
 public struct LocalEditorAssetLocator {

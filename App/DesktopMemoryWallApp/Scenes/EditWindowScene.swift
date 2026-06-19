@@ -8,7 +8,12 @@ struct EditWindowScene: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            WebEditorView(board: store.editorBoard ?? store.board) { message in
+            WebEditorView(
+                board: store.editorBoard ?? store.board,
+                displays: store.displays,
+                boardsByDisplayID: store.editorBoardsByDisplayID,
+                selectedDisplayID: store.selectedDisplayID
+            ) { message in
                 Task { @MainActor in store.handleEditorMessage(message) }
             } onError: { error in
                 Task { @MainActor in store.lastError = error.localizedDescription }

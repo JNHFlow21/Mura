@@ -59,6 +59,36 @@ final class WorkspaceStoreTests: XCTestCase {
         XCTAssertTrue(first.lastPathComponent.hasPrefix("wallpaper-"))
     }
 
+    func testDisplayBoardsSaveAndLoadIndependently() throws {
+        let layout = tempLayout()
+        let store = FileBoardStore(layout: layout)
+        let main = DisplayProfile(id: "main/display", name: "Main", width: 1920, height: 1080, scale: 2, isMain: true)
+        let side = DisplayProfile(id: "side:display", name: "Side", width: 1280, height: 720, scale: 1, isMain: false)
+
+        var mainBoard = BoardDocument.blank(display: main)
+        mainBoard.addText("Main only", x: 20, y: 30)
+        var sideBoard = BoardDocument.blank(display: side)
+        sideBoard.addText("Side only", x: 40, y: 50)
+
+        try store.saveBoard(mainBoard, for: main, actor: "test", reason: "unit")
+        try store.saveBoard(sideBoard, for: side, actor: "test", reason: "unit")
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: layout.boardURL(forDisplayID: main.id).path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: layout.boardURL(forDisplayID: side.id).path))
+        XCTAssertNotEqual(layout.boardURL(forDisplayID: main.id), layout.boardURL(forDisplayID: side.id))
+        XCTAssertEqual(try store.loadBoard(for: main).elements.first?.text, "Main only")
+        XCTAssertEqual(try store.loadBoard(for: side).elements.first?.text, "Side only")
+    }
+
+    func testDisplayWallpaperRenderURLIncludesDisplayIdentifier() {
+        let layout = tempLayout()
+        let first = layout.wallpaperRenderURL(forDisplayID: "Display/1", id: "render", date: Date(timeIntervalSince1970: 1))
+        let second = layout.wallpaperRenderURL(forDisplayID: "Display:2", id: "render", date: Date(timeIntervalSince1970: 1))
+        XCTAssertNotEqual(first, second)
+        XCTAssertTrue(first.lastPathComponent.contains("Display-1"))
+        XCTAssertTrue(second.lastPathComponent.contains("Display-2"))
+    }
+
     private func tempLayout() -> WorkspaceLayout {
         WorkspaceLayout(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true))
     }

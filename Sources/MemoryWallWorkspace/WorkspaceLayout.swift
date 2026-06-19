@@ -15,15 +15,23 @@ public struct WorkspaceLayout: Equatable, Sendable {
     }
 
     public var boardsDirectory: URL { root.appendingPathComponent("boards", isDirectory: true) }
+    public var displayBoardsDirectory: URL { boardsDirectory.appendingPathComponent("displays", isDirectory: true) }
     public var activeBoardURL: URL { boardsDirectory.appendingPathComponent("active-board.json") }
     public var preferencesURL: URL { root.appendingPathComponent("preferences.json") }
     public var rendersDirectory: URL { root.appendingPathComponent("renders", isDirectory: true) }
     public var previewsDirectory: URL { rendersDirectory.appendingPathComponent("previews", isDirectory: true) }
     public var latestRenderURL: URL { rendersDirectory.appendingPathComponent("latest-wallpaper.png") }
+    public func boardURL(forDisplayID displayID: String) -> URL {
+        displayBoardsDirectory.appendingPathComponent("\(Self.safePathComponent(displayID)).json")
+    }
     public func wallpaperRenderURL(id: String = UUID().uuidString, date: Date = Date()) -> URL {
         let milliseconds = Int(date.timeIntervalSince1970 * 1000)
         let safeID = id.replacingOccurrences(of: "/", with: "-")
         return rendersDirectory.appendingPathComponent("wallpaper-\(milliseconds)-\(safeID).png")
+    }
+    public func wallpaperRenderURL(forDisplayID displayID: String, id: String = UUID().uuidString, date: Date = Date()) -> URL {
+        let milliseconds = Int(date.timeIntervalSince1970 * 1000)
+        return rendersDirectory.appendingPathComponent("wallpaper-\(Self.safePathComponent(displayID))-\(milliseconds)-\(Self.safePathComponent(id)).png")
     }
     public var snapshotsDirectory: URL { root.appendingPathComponent("snapshots", isDirectory: true) }
     public var boardSnapshotsDirectory: URL { snapshotsDirectory.appendingPathComponent("boards", isDirectory: true) }
@@ -35,7 +43,7 @@ public struct WorkspaceLayout: Equatable, Sendable {
     public var contextURL: URL { agentDocsDirectory.appendingPathComponent("context.md") }
 
     public func ensureDirectories(fileManager: FileManager = .default) throws {
-        for directory in [root, boardsDirectory, rendersDirectory, previewsDirectory, snapshotsDirectory, boardSnapshotsDirectory, wallpaperSnapshotsDirectory, logsDirectory, docsDirectory, agentDocsDirectory] {
+        for directory in [root, boardsDirectory, displayBoardsDirectory, rendersDirectory, previewsDirectory, snapshotsDirectory, boardSnapshotsDirectory, wallpaperSnapshotsDirectory, logsDirectory, docsDirectory, agentDocsDirectory] {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         }
     }
@@ -54,6 +62,13 @@ public struct WorkspaceLayout: Equatable, Sendable {
         if !fileManager.fileExists(atPath: auditLogURL.path) {
             fileManager.createFile(atPath: auditLogURL.path, contents: nil)
         }
+    }
+
+    public static func safePathComponent(_ value: String) -> String {
+        let pattern = "[^a-zA-Z0-9._-]+"
+        let sanitized = value.replacingOccurrences(of: pattern, with: "-", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-."))
+        return sanitized.isEmpty ? "display" : sanitized
     }
 }
 

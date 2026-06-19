@@ -438,7 +438,17 @@
       notifySelectedDisplayChanged();
     }
     function pushUndo() { undoStack.push(clone(board)); if (undoStack.length > 80) undoStack.shift(); redoStack.length = 0; }
-    function setTool(next) { commitTextEditor(); tool = next; document.querySelectorAll('[data-tool]').forEach(btn => btn.classList.toggle('active', btn.dataset.tool === tool)); canvas.style.cursor = tool === 'select' ? 'default' : tool === 'text' ? 'text' : 'crosshair'; }
+    function setTool(next) {
+      commitTextEditor();
+      tool = next;
+      if (tool !== 'select') {
+        selectedId = null;
+        dragging = false;
+      }
+      document.querySelectorAll('[data-tool]').forEach(btn => btn.classList.toggle('active', btn.dataset.tool === tool));
+      canvas.style.cursor = tool === 'select' ? 'default' : tool === 'text' ? 'text' : 'crosshair';
+      render();
+    }
     function post(kind, payload = {}, includeBoard = true, extra = {}) {
       const message = { kind, payload, ...extra };
       if (includeBoard) message.board = board;
@@ -624,9 +634,9 @@
       if (tool === 'text') { event.preventDefault(); event.stopPropagation(); startTextEditor(point); return; }
       canvas.focus({ preventScroll: true });
       canvas.setPointerCapture(event.pointerId);
+      if (tool === 'pen') { selectedId = null; dragging = false; pushUndo(); drawing = true; currentStroke = { id: uuid(), type: 'freedraw', x: point.x, y: point.y, width: 1, height: 1, text: '', fontSize: 8, strokeColor: DEFAULT_INK, backgroundColor: 'transparent', roughness: 1, extra: { points: [point] } }; board.elements.push(currentStroke); render(); return; }
       const hit = hitTest(point, tool === 'eraser' ? 'eraser' : 'select'); selectedId = hit?.id || null;
       if (tool === 'eraser') { if (hit) { pushUndo(); board.elements = board.elements.filter(e => e.id !== hit.id); selectedId = null; signalChanged(); statusEl.textContent = '已擦除'; } render(); return; }
-      if (tool === 'pen') { pushUndo(); drawing = true; currentStroke = { id: uuid(), type: 'freedraw', x: point.x, y: point.y, width: 1, height: 1, text: '', fontSize: 8, strokeColor: DEFAULT_INK, backgroundColor: 'transparent', roughness: 1, extra: { points: [point] } }; board.elements.push(currentStroke); render(); return; }
       if (tool === 'select' && hit) { pushUndo(); dragging = true; dragOffset = { x: point.x - hit.x, y: point.y - hit.y }; }
       render();
     });
@@ -655,7 +665,7 @@
     }
     document.addEventListener('keydown', event => {
       if (document.activeElement === textEditor) return;
-      if (isDeleteKey(event) && selectedId) { event.preventDefault(); event.stopPropagation(); deleteSelected(); return; }
+      if (isDeleteKey(event) && tool === 'select' && selectedId) { event.preventDefault(); event.stopPropagation(); deleteSelected(); return; }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.shiftKey ? redo() : undo(); }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); }
     }, true);

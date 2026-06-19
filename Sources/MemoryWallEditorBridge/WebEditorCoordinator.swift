@@ -5,6 +5,7 @@ import WebKit
 public final class WebEditorCoordinator: NSObject, WKScriptMessageHandler {
     public var onMessage: (EditorBridgeMessage) -> Void
     public var onError: (Error) -> Void
+    public var lastLoadedBoardJSON: String?
 
     public init(onMessage: @escaping (EditorBridgeMessage) -> Void = { _ in }, onError: @escaping (Error) -> Void = { _ in }) {
         self.onMessage = onMessage

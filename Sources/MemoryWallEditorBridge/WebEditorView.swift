@@ -37,10 +37,27 @@ public struct WebEditorView: NSViewRepresentable {
     }
 
     public func updateNSView(_ webView: WKWebView, context: Context) {
-        guard let data = try? JSONEncoder().encode(board), let json = String(data: data, encoding: .utf8) else { return }
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(board), let json = String(data: data, encoding: .utf8) else { return }
+        guard context.coordinator.lastLoadedBoardJSON != json else { return }
         let escaped = json.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "`", with: "\\`")
-        webView.evaluateJavaScript("window.memoryWallLoadBoard && window.memoryWallLoadBoard(`\(escaped)`);") { _, error in
-            if let error { onError(error) }
+        let script = """
+        (function() {
+          const json = `\(escaped)`;
+          window.__memoryWallNativeBoardJSON = json;
+          if (window.memoryWallLoadBoard) {
+            window.memoryWallLoadBoard(json);
+            return true;
+          }
+          return false;
+        })();
+        """
+        webView.evaluateJavaScript(script) { result, error in
+            if let error { onError(error); return }
+            if (result as? Bool) == true {
+                context.coordinator.lastLoadedBoardJSON = json
+            }
         }
     }
 

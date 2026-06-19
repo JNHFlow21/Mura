@@ -165,7 +165,7 @@
       if (includeBoard) message.board = board;
       window.webkit?.messageHandlers?.memoryWall?.postMessage(JSON.stringify(message));
     }
-    function signalChanged() { board.metadata.updatedAt = nowISO(); post('boardChanged', {}, true); }
+    function signalChanged() { board.metadata.updatedAt = nowISO(); post('boardChanged', {}, false); }
     function resizeCanvas() {
       const availableW = Math.max(480, wrap.clientWidth - 64);
       const availableH = Math.max(320, wrap.clientHeight - 64);
@@ -323,7 +323,8 @@
     window.addEventListener('resize', resizeCanvas);
     window.memoryWallLoadBoard = loadBoard;
     window.memoryWallRequestExport = save;
-    document.fonts.ready.then(() => { statusEl.textContent = `空白画布 ${board.canvasWidth}×${board.canvasHeight}`; post('ready', { fontReady: true, fontFamily: FONT }, true); resizeCanvas(); }).catch(error => post('error', { message: String(error) }, false));
+    if (window.__memoryWallNativeBoardJSON) loadBoard(window.__memoryWallNativeBoardJSON);
+    document.fonts.ready.then(() => { statusEl.textContent = `空白画布 ${board.canvasWidth}×${board.canvasHeight}`; post('ready', { fontReady: true, fontFamily: FONT }, false); resizeCanvas(); }).catch(error => post('error', { message: String(error) }, false));
     resizeCanvas();
   </script>
 </body>

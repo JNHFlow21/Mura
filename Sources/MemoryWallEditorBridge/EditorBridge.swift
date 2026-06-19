@@ -41,8 +41,13 @@ public struct EditorBridgeMessage: Codable, Equatable, Sendable {
             let container = try decoder.singleValueContainer()
             if let seconds = try? container.decode(Double.self) { return Date(timeIntervalSinceReferenceDate: seconds) }
             if let text = try? container.decode(String.self) {
-                let formatter = ISO8601DateFormatter()
-                if let date = formatter.date(from: text) { return date }
+                let fractional = ISO8601DateFormatter()
+                fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                let plain = ISO8601DateFormatter()
+                plain.formatOptions = [.withInternetDateTime]
+                if let date = fractional.date(from: text) ?? plain.date(from: text) {
+                    return date
+                }
             }
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected a numeric or ISO-8601 date")
         }
@@ -51,6 +56,7 @@ public struct EditorBridgeMessage: Codable, Equatable, Sendable {
     }
 
     public var pngDataURL: String? { payload["pngDataURL"]?.stringValue }
+
 }
 
 public struct LocalEditorAssetLocator {

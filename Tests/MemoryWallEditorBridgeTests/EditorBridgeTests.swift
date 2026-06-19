@@ -21,6 +21,31 @@ final class EditorBridgeTests: XCTestCase {
         XCTAssertEqual(try EditorExportCodec.pngData(fromDataURL: try XCTUnwrap(message.pngDataURL)), Data("ABC".utf8))
     }
 
+    func testDecodesEditorDatesWithFractionalSeconds() throws {
+        let json = """
+        {
+          "kind":"exportPNG",
+          "board":{
+            "id":"js-board",
+            "schemaVersion":2,
+            "metadata":{"title":"Desktop Memory Wall","createdAt":"2026-06-19T05:46:07.123Z","updatedAt":"2026-06-19T05:46:08.456Z","activeTemplateID":null,"displayProfile":{"id":"main","name":"Main Display","width":1920,"height":1080,"scale":1,"isMain":true}},
+            "canvasWidth":1920,
+            "canvasHeight":1080,
+            "backgroundColor":"#fff8df",
+            "elements":[],
+            "appState":{"viewBackgroundColor":"#fff8df","currentItemFontFamily":"LXGW WenKai","theme":"light"},
+            "files":{},
+            "rawExcalidraw":{"type":"desktop-memory-wall-canvas","version":2}
+          },
+          "payload":{"pngDataURL":"data:image/png;base64,QUJD"}
+        }
+        """
+        let message = try EditorBridgeMessage.decode(json: json)
+        XCTAssertEqual(message.kind, EditorBridgeMessage.Kind.exportPNG)
+        XCTAssertEqual(message.board?.id, "js-board")
+        XCTAssertEqual(message.board?.canvasWidth, 1920)
+    }
+
     func testRejectsInvalidBridgeMessages() {
         XCTAssertThrowsError(try EditorBridgeMessage.decode(json: "not-json"))
         XCTAssertThrowsError(try EditorExportCodec.pngData(fromDataURL: "data:image/jpeg;base64,AAAA"))

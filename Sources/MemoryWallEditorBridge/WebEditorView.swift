@@ -27,7 +27,8 @@ public struct WebEditorView: NSViewRepresentable {
         webView.setValue(false, forKey: "drawsBackground")
         do {
             let url = try locator.indexURL()
-            webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+            let root = try locator.resourceRootURL()
+            webView.loadFileURL(url, allowingReadAccessTo: root)
         } catch {
             onError(error)
             webView.loadHTMLString(Self.fallbackHTML, baseURL: nil)
@@ -44,6 +45,6 @@ public struct WebEditorView: NSViewRepresentable {
     }
 
     public static let fallbackHTML = """
-    <!doctype html><meta charset='utf-8'><body style='font-family: Marker Felt, Chalkboard SE, sans-serif; background:#fff8df;'><h1>Desktop Memory Wall</h1><p>Editor asset missing; use dmwctl or rebuild assets.</p></body>
+    <!doctype html><meta charset='utf-8'><body style='font-family: system-ui; background:#fff8df;'><h1>Desktop Memory Wall</h1><p>Editor asset missing; rebuild app resources.</p></body>
     """
 }

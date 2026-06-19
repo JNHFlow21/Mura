@@ -23,7 +23,6 @@ public struct WorkspaceLayout: Equatable, Sendable {
     public var snapshotsDirectory: URL { root.appendingPathComponent("snapshots", isDirectory: true) }
     public var boardSnapshotsDirectory: URL { snapshotsDirectory.appendingPathComponent("boards", isDirectory: true) }
     public var wallpaperSnapshotsDirectory: URL { snapshotsDirectory.appendingPathComponent("wallpapers", isDirectory: true) }
-    public var templatesDirectory: URL { root.appendingPathComponent("templates", isDirectory: true) }
     public var logsDirectory: URL { root.appendingPathComponent("logs", isDirectory: true) }
     public var auditLogURL: URL { logsDirectory.appendingPathComponent("audit.jsonl") }
     public var docsDirectory: URL { root.appendingPathComponent("docs", isDirectory: true) }
@@ -31,7 +30,7 @@ public struct WorkspaceLayout: Equatable, Sendable {
     public var contextURL: URL { agentDocsDirectory.appendingPathComponent("context.md") }
 
     public func ensureDirectories(fileManager: FileManager = .default) throws {
-        for directory in [root, boardsDirectory, rendersDirectory, previewsDirectory, snapshotsDirectory, boardSnapshotsDirectory, wallpaperSnapshotsDirectory, templatesDirectory, logsDirectory, docsDirectory, agentDocsDirectory] {
+        for directory in [root, boardsDirectory, rendersDirectory, previewsDirectory, snapshotsDirectory, boardSnapshotsDirectory, wallpaperSnapshotsDirectory, logsDirectory, docsDirectory, agentDocsDirectory] {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         }
     }
@@ -47,8 +46,6 @@ public struct WorkspaceLayout: Equatable, Sendable {
         if !fileManager.fileExists(atPath: contextURL.path) {
             try defaultAgentContext.write(to: contextURL, atomically: true, encoding: .utf8)
         }
-        let templateStore = FileTemplateStore(layout: self, fileManager: fileManager)
-        try templateStore.ensureDefaultTemplates()
         if !fileManager.fileExists(atPath: auditLogURL.path) {
             fileManager.createFile(atPath: auditLogURL.path, contents: nil)
         }
@@ -75,7 +72,7 @@ private let defaultAgentContext = """
 
 - Keep reminders extremely large and readable from desktop distance.
 - Prefer a hand-drawn Excalidraw-like feel: warm paper background, dark ink, minimal color accents.
-- Default structure: one title, three focus items, and one short “do not forget” area.
+- The active board starts blank; agents should place text or strokes explicitly by coordinate.
 - Keep everything local-first. Do not sync, upload, or infer private reminders without explicit user intent.
 - Agents should preview before changing wallpaper and require confirmation before destructive visible actions.
 """

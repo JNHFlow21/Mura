@@ -15,7 +15,7 @@ struct DesktopMemoryWallApp: App {
             EditWindowScene(store: store)
                 .onAppear { store.isEditorPresented = true }
         }
-        .defaultSize(width: 1120, height: 760)
+        .defaultSize(width: 1280, height: 820)
 
         Settings {
             SettingsSceneView(store: store)

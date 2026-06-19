@@ -20,7 +20,7 @@ let package = Package(
         .target(name: "MemoryWallRenderer", dependencies: ["MemoryWallCore", "MemoryWallWorkspace"]),
         .target(name: "MemoryWallWallpaper", dependencies: ["MemoryWallCore", "MemoryWallWorkspace", "MemoryWallRenderer"]),
         .target(name: "MemoryWallEditorBridge", dependencies: ["MemoryWallCore", "MemoryWallWorkspace"], resources: [.process("Resources")]),
-        .target(name: "MemoryWallAgentTools", dependencies: ["MemoryWallCore", "MemoryWallWorkspace", "MemoryWallRenderer", "MemoryWallWallpaper"]),
+        .target(name: "MemoryWallAgentTools", dependencies: ["MemoryWallCore", "MemoryWallWorkspace", "MemoryWallRenderer", "MemoryWallWallpaper", "MemoryWallEditorBridge"]),
         .executableTarget(name: "DesktopMemoryWallApp", dependencies: ["MemoryWallCore", "MemoryWallWorkspace", "MemoryWallRenderer", "MemoryWallWallpaper", "MemoryWallEditorBridge", "MemoryWallAgentTools"], path: "App/DesktopMemoryWallApp", resources: [.process("Resources")]),
         .executableTarget(name: "dmwctl", dependencies: ["MemoryWallAgentTools"]),
         .testTarget(name: "MemoryWallCoreTests", dependencies: ["MemoryWallCore"]),

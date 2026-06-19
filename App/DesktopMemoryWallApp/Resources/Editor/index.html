@@ -1,38 +1,330 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hans">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Desktop Memory Wall Editor</title>
+  <title>Desktop Memory Wall Canvas</title>
   <style>
-    :root { color-scheme: light; }
-    body { margin: 0; background: #fff8df; color: #111827; font-family: "Marker Felt", "Chalkboard SE", "Comic Sans MS", cursive; }
-    #wall { min-height: 100vh; padding: 56px 72px; box-sizing: border-box; background-image: radial-gradient(rgba(17,24,39,.08) 1px, transparent 1px); background-size: 28px 28px; }
-    h1 { font-size: 92px; margin: 0 0 32px; letter-spacing: 1px; }
-    textarea { width: 100%; min-height: 58vh; border: 6px solid #111827; border-radius: 28px; background: rgba(255,255,255,.42); padding: 34px; box-sizing: border-box; color: #111827; font: 72px/1.35 "Marker Felt", "Chalkboard SE", cursive; outline: none; resize: vertical; }
-    .hint { font: 26px system-ui; opacity: .62; margin-top: 20px; }
+    @font-face {
+      font-family: "LXGW WenKai";
+      src: url("LXGWWenKai-Regular.ttf") format("truetype"),
+           url("../Fonts/LXGWWenKai-Regular.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    :root {
+      color-scheme: light;
+      --paper: #fff8df;
+      --ink: #111827;
+      --muted: rgba(17, 24, 39, .62);
+      --panel: rgba(255, 255, 255, .82);
+      --line: rgba(17, 24, 39, .18);
+      --accent: #b91c1c;
+      font-family: "LXGW WenKai", "STKaiti", "Kaiti SC", "PingFang SC", cursive;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--paper); color: var(--ink); }
+    body { font-family: "LXGW WenKai", "STKaiti", "Kaiti SC", "PingFang SC", cursive; }
+    #app { width: 100vw; height: 100vh; display: grid; grid-template-rows: auto 1fr; background: #f7f0dc; }
+    #toolbar {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255, 248, 223, .86);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+      user-select: none;
+    }
+    .brand { font: 15px/1.1 system-ui, sans-serif; color: var(--muted); margin: 0 6px 0 4px; white-space: nowrap; }
+    .spacer { flex: 1; }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      color: var(--ink);
+      height: 36px;
+      padding: 0 12px;
+      font: 14px/1 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    button.active { background: #111827; color: #fff8df; border-color: #111827; }
+    button.primary { background: #111827; color: #fff8df; border-color: #111827; }
+    button.ghost { background: transparent; }
+    #stageWrap { position: relative; overflow: auto; padding: 32px; display: grid; place-items: start center; }
+    #canvasBox {
+      position: relative;
+      background: var(--paper);
+      box-shadow: 0 20px 80px rgba(17, 24, 39, .18), 0 0 0 1px rgba(17,24,39,.10);
+      border-radius: 3px;
+      transform-origin: top left;
+    }
+    canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+    #textEditor {
+      position: absolute;
+      z-index: 5;
+      display: none;
+      min-width: 180px;
+      min-height: 78px;
+      resize: both;
+      overflow: hidden;
+      background: rgba(255,255,255,.30);
+      border: 2px dashed rgba(17,24,39,.42);
+      border-radius: 10px;
+      color: var(--ink);
+      outline: none;
+      padding: 4px 8px;
+      font-family: "LXGW WenKai", "STKaiti", "Kaiti SC", "PingFang SC", cursive;
+      line-height: 1.2;
+    }
+    #status { margin-left: 8px; color: var(--muted); font: 13px system-ui, sans-serif; min-width: 120px; }
+    #hint {
+      position: fixed; left: 16px; bottom: 14px; color: rgba(17,24,39,.48);
+      font: 13px system-ui, sans-serif; pointer-events: none;
+    }
   </style>
 </head>
 <body>
-  <main id="wall">
-    <h1>Desktop Memory Wall</h1>
-    <textarea id="text" placeholder="写下你最重要的提醒……"></textarea>
-    <div class="hint">Local Excalidraw-like editor shell. Save from the native menu bar window.</div>
-  </main>
+  <div id="app">
+    <div id="toolbar">
+      <span class="brand">Memory Wall</span>
+      <button data-tool="select" class="active">选择</button>
+      <button data-tool="text">文字</button>
+      <button data-tool="pen">画笔</button>
+      <button data-tool="eraser">橡皮</button>
+      <button id="undo">撤销</button>
+      <button id="redo">重做</button>
+      <span id="status">字体加载中…</span>
+      <span class="spacer"></span>
+      <button id="cancel" class="ghost">取消</button>
+      <button id="save" class="primary">保存到桌面</button>
+    </div>
+    <div id="stageWrap">
+      <div id="canvasBox">
+        <canvas id="scene"></canvas>
+        <textarea id="textEditor" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+  <div id="hint">文字工具：点击画布输入；画笔：拖动涂鸦；选择：拖动元素；Delete 删除。</div>
   <script>
-    const textarea = document.getElementById('text');
-    window.memoryWallLoadBoard = function(json) {
-      try {
-        const board = JSON.parse(json);
-        textarea.value = (board.elements || []).filter(e => e.type === 'text').map(e => e.text).join('\n');
-      } catch (error) {
-        window.webkit?.messageHandlers?.memoryWall?.postMessage(JSON.stringify({ kind: 'error', payload: { message: String(error) } }));
+    const DEFAULT_WIDTH = 1920;
+    const DEFAULT_HEIGHT = 1080;
+    const DEFAULT_BG = '#fff8df';
+    const DEFAULT_INK = '#111827';
+    const FONT = 'LXGW WenKai';
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+    const box = document.getElementById('canvasBox');
+    const wrap = document.getElementById('stageWrap');
+    const textEditor = document.getElementById('textEditor');
+    const statusEl = document.getElementById('status');
+    let tool = 'select';
+    let board = blankBoard();
+    let selectedId = null;
+    let drawing = false;
+    let dragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    let currentStroke = null;
+    let editorElementId = null;
+    let suppressLoad = false;
+    const undoStack = [];
+    const redoStack = [];
+
+    function uuid() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(16).slice(2); }
+    function nowISO() { return new Date().toISOString(); }
+    function blankBoard() {
+      return {
+        id: uuid(), schemaVersion: 2,
+        metadata: { title: 'Desktop Memory Wall', createdAt: nowISO(), updatedAt: nowISO(), activeTemplateID: null, displayProfile: { id: 'main', name: 'Main Display', width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT, scale: 1, isMain: true } },
+        canvasWidth: DEFAULT_WIDTH, canvasHeight: DEFAULT_HEIGHT, backgroundColor: DEFAULT_BG,
+        elements: [], appState: { viewBackgroundColor: DEFAULT_BG, currentItemFontFamily: FONT, theme: 'light' }, files: {}, rawExcalidraw: { type: 'desktop-memory-wall-canvas', version: 2 }
+      };
+    }
+    function normalizeBoard(input) {
+      const profile = input?.metadata?.displayProfile || {};
+      const width = Number(input?.canvasWidth || profile.width || DEFAULT_WIDTH);
+      const height = Number(input?.canvasHeight || profile.height || DEFAULT_HEIGHT);
+      return {
+        ...blankBoard(), ...input,
+        canvasWidth: width, canvasHeight: height,
+        backgroundColor: input?.backgroundColor || input?.appState?.viewBackgroundColor || DEFAULT_BG,
+        appState: { viewBackgroundColor: input?.backgroundColor || input?.appState?.viewBackgroundColor || DEFAULT_BG, currentItemFontFamily: FONT, theme: 'light', ...(input?.appState || {}) },
+        metadata: { ...blankBoard().metadata, ...(input?.metadata || {}), activeTemplateID: null, displayProfile: { id: 'main', name: 'Main Display', width, height, scale: 1, isMain: true, ...(profile || {}) } },
+        elements: Array.isArray(input?.elements) ? input.elements : [],
+        files: input?.files || {}, rawExcalidraw: input?.rawExcalidraw || { type: 'desktop-memory-wall-canvas', version: 2 }
+      };
+    }
+    function clone(value) { return JSON.parse(JSON.stringify(value)); }
+    function pushUndo() { undoStack.push(clone(board)); if (undoStack.length > 80) undoStack.shift(); redoStack.length = 0; }
+    function setTool(next) { commitTextEditor(); tool = next; document.querySelectorAll('[data-tool]').forEach(btn => btn.classList.toggle('active', btn.dataset.tool === tool)); canvas.style.cursor = tool === 'select' ? 'default' : tool === 'text' ? 'text' : 'crosshair'; }
+    function post(kind, payload = {}, includeBoard = true) {
+      const message = { kind, payload };
+      if (includeBoard) message.board = board;
+      window.webkit?.messageHandlers?.memoryWall?.postMessage(JSON.stringify(message));
+    }
+    function signalChanged() { board.metadata.updatedAt = nowISO(); post('boardChanged', {}, true); }
+    function resizeCanvas() {
+      const availableW = Math.max(480, wrap.clientWidth - 64);
+      const availableH = Math.max(320, wrap.clientHeight - 64);
+      const scale = Math.min(availableW / board.canvasWidth, availableH / board.canvasHeight, 1);
+      const cssW = Math.max(1, Math.round(board.canvasWidth * scale));
+      const cssH = Math.max(1, Math.round(board.canvasHeight * scale));
+      box.style.width = cssW + 'px'; box.style.height = cssH + 'px';
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
+      canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
+      ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+      render();
+    }
+    function pointerToBoard(event) {
+      const rect = canvas.getBoundingClientRect();
+      return { x: (event.clientX - rect.left) * board.canvasWidth / rect.width, y: (event.clientY - rect.top) * board.canvasHeight / rect.height };
+    }
+    function boardToCSS(point) {
+      const rect = canvas.getBoundingClientRect();
+      return { x: point.x * rect.width / board.canvasWidth, y: point.y * rect.height / board.canvasHeight };
+    }
+    function textLines(text) { return String(text || '').split('\n'); }
+    function drawTextElement(target, element) {
+      target.save();
+      target.fillStyle = element.strokeColor || DEFAULT_INK;
+      target.font = `${element.fontSize || 92}px "${FONT}", "Kaiti SC", cursive`;
+      target.textBaseline = 'top';
+      target.textAlign = 'left';
+      const lineHeight = (element.fontSize || 92) * 1.18;
+      textLines(element.text).forEach((line, index) => target.fillText(line, element.x, element.y + index * lineHeight));
+      target.restore();
+    }
+    function drawStrokeElement(target, element) {
+      const points = element.extra?.points || [];
+      if (!points.length) return;
+      target.save();
+      target.strokeStyle = element.strokeColor || DEFAULT_INK;
+      target.lineWidth = element.fontSize || 8;
+      target.lineCap = 'round'; target.lineJoin = 'round';
+      target.beginPath();
+      target.moveTo(points[0].x, points[0].y);
+      points.slice(1).forEach(point => target.lineTo(point.x, point.y));
+      target.stroke();
+      target.restore();
+    }
+    function render(target = ctx) {
+      target.save();
+      target.fillStyle = board.backgroundColor || DEFAULT_BG;
+      target.fillRect(0, 0, board.canvasWidth, board.canvasHeight);
+      for (const element of board.elements) {
+        if (element.type === 'text') drawTextElement(target, element);
+        if (element.type === 'freedraw' || element.type === 'line' || element.type === 'arrow') drawStrokeElement(target, element);
+        if (selectedId === element.id && target === ctx) drawSelection(target, element);
       }
-    };
-    textarea.addEventListener('input', () => {
-      window.webkit?.messageHandlers?.memoryWall?.postMessage(JSON.stringify({ kind: 'boardChanged', payload: { text: textarea.value } }));
+      target.restore();
+    }
+    function drawSelection(target, element) {
+      target.save(); target.strokeStyle = 'rgba(29,78,216,.85)'; target.lineWidth = 2; target.setLineDash([8, 8]);
+      target.strokeRect(element.x - 8, element.y - 8, Math.max(28, element.width + 16), Math.max(28, element.height + 16));
+      target.restore();
+    }
+    function hitTest(point) {
+      for (let i = board.elements.length - 1; i >= 0; i--) {
+        const e = board.elements[i];
+        if (e.type === 'text' && point.x >= e.x - 12 && point.x <= e.x + e.width + 12 && point.y >= e.y - 12 && point.y <= e.y + e.height + 12) return e;
+        const pts = e.extra?.points || [];
+        if (pts.some(p => Math.hypot(p.x - point.x, p.y - point.y) < Math.max(18, e.fontSize * 1.8))) return e;
+      }
+      return null;
+    }
+    function bounds(points) {
+      const xs = points.map(p => p.x), ys = points.map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      return { x: minX, y: minY, width: Math.max(1, maxX - minX), height: Math.max(1, maxY - minY) };
+    }
+    function startTextEditor(point, existing = null) {
+      commitTextEditor();
+      pushUndo();
+      const element = existing || { id: uuid(), type: 'text', x: point.x, y: point.y, width: 760, height: 130, text: '', fontSize: 92, strokeColor: DEFAULT_INK, backgroundColor: 'transparent', roughness: 1, extra: {} };
+      if (!existing) board.elements.push(element);
+      selectedId = element.id; editorElementId = element.id;
+      const css = boardToCSS({ x: element.x, y: element.y });
+      const scaleX = canvas.getBoundingClientRect().width / board.canvasWidth;
+      textEditor.style.display = 'block';
+      textEditor.style.left = css.x + 'px'; textEditor.style.top = css.y + 'px';
+      textEditor.style.width = Math.max(180, element.width * scaleX) + 'px';
+      textEditor.style.height = Math.max(78, element.height * scaleX) + 'px';
+      textEditor.style.fontSize = Math.max(20, element.fontSize * scaleX) + 'px';
+      textEditor.value = element.text || '';
+      textEditor.focus(); render();
+    }
+    function commitTextEditor() {
+      if (!editorElementId) return;
+      const element = board.elements.find(e => e.id === editorElementId);
+      if (element) {
+        const rect = textEditor.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        element.text = textEditor.value;
+        element.width = rect.width * board.canvasWidth / canvasRect.width;
+        element.height = rect.height * board.canvasHeight / canvasRect.height;
+        if (!element.text.trim()) board.elements = board.elements.filter(e => e.id !== element.id);
+      }
+      editorElementId = null; textEditor.style.display = 'none'; signalChanged(); render();
+    }
+    canvas.addEventListener('pointerdown', event => {
+      const point = pointerToBoard(event); canvas.setPointerCapture(event.pointerId);
+      if (tool === 'text') { startTextEditor(point); return; }
+      const hit = hitTest(point); selectedId = hit?.id || null;
+      if (tool === 'eraser') { if (hit) { pushUndo(); board.elements = board.elements.filter(e => e.id !== hit.id); signalChanged(); } render(); return; }
+      if (tool === 'pen') { pushUndo(); drawing = true; currentStroke = { id: uuid(), type: 'freedraw', x: point.x, y: point.y, width: 1, height: 1, text: '', fontSize: 8, strokeColor: DEFAULT_INK, backgroundColor: 'transparent', roughness: 1, extra: { points: [point] } }; board.elements.push(currentStroke); render(); return; }
+      if (tool === 'select' && hit) { pushUndo(); dragging = true; dragOffset = { x: point.x - hit.x, y: point.y - hit.y }; }
+      render();
     });
-    window.webkit?.messageHandlers?.memoryWall?.postMessage(JSON.stringify({ kind: 'ready', payload: {} }));
+    canvas.addEventListener('pointermove', event => {
+      const point = pointerToBoard(event);
+      if (drawing && currentStroke) { currentStroke.extra.points.push(point); Object.assign(currentStroke, bounds(currentStroke.extra.points)); render(); }
+      if (dragging && selectedId) {
+        const element = board.elements.find(e => e.id === selectedId);
+        if (element) {
+          const oldX = element.x, oldY = element.y;
+          element.x = Math.max(0, Math.min(board.canvasWidth - element.width, point.x - dragOffset.x));
+          element.y = Math.max(0, Math.min(board.canvasHeight - element.height, point.y - dragOffset.y));
+          const dx = element.x - oldX, dy = element.y - oldY;
+          if (element.extra?.points) element.extra.points = element.extra.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+          render();
+        }
+      }
+    });
+    canvas.addEventListener('pointerup', () => { if (drawing || dragging) signalChanged(); drawing = false; dragging = false; currentStroke = null; });
+    canvas.addEventListener('dblclick', event => { const hit = hitTest(pointerToBoard(event)); if (hit?.type === 'text') startTextEditor({ x: hit.x, y: hit.y }, hit); });
+    textEditor.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') commitTextEditor(); event.stopPropagation(); });
+    textEditor.addEventListener('blur', commitTextEditor);
+    window.addEventListener('keydown', event => {
+      if (event.key === 'Delete' && selectedId) { pushUndo(); board.elements = board.elements.filter(e => e.id !== selectedId); selectedId = null; signalChanged(); render(); }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.shiftKey ? redo() : undo(); }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); }
+    });
+    function undo() { commitTextEditor(); const previous = undoStack.pop(); if (!previous) return; redoStack.push(clone(board)); board = normalizeBoard(previous); selectedId = null; signalChanged(); resizeCanvas(); }
+    function redo() { commitTextEditor(); const next = redoStack.pop(); if (!next) return; undoStack.push(clone(board)); board = normalizeBoard(next); selectedId = null; signalChanged(); resizeCanvas(); }
+    async function exportPNG() {
+      commitTextEditor();
+      await document.fonts.ready;
+      const output = document.createElement('canvas'); output.width = board.canvasWidth; output.height = board.canvasHeight;
+      const out = output.getContext('2d'); out.fillStyle = board.backgroundColor || DEFAULT_BG; out.fillRect(0, 0, output.width, output.height);
+      for (const element of board.elements) { if (element.type === 'text') drawTextElement(out, element); if (element.type === 'freedraw' || element.type === 'line' || element.type === 'arrow') drawStrokeElement(out, element); }
+      return output.toDataURL('image/png');
+    }
+    async function save() { try { const pngDataURL = await exportPNG(); post('exportPNG', { pngDataURL, width: board.canvasWidth, height: board.canvasHeight, fontReady: true }, true); statusEl.textContent = '已发送保存'; } catch (error) { post('error', { message: String(error) }, false); statusEl.textContent = '保存失败'; } }
+    function loadBoard(json) { if (suppressLoad) return; try { board = normalizeBoard(JSON.parse(json)); undoStack.length = 0; redoStack.length = 0; selectedId = null; commitTextEditor(); resizeCanvas(); } catch (error) { post('error', { message: String(error) }, false); } }
+    document.querySelectorAll('[data-tool]').forEach(btn => btn.addEventListener('click', () => setTool(btn.dataset.tool)));
+    document.getElementById('undo').addEventListener('click', undo);
+    document.getElementById('redo').addEventListener('click', redo);
+    document.getElementById('save').addEventListener('click', save);
+    document.getElementById('cancel').addEventListener('click', () => post('cancel', {}, false));
+    window.addEventListener('resize', resizeCanvas);
+    window.memoryWallLoadBoard = loadBoard;
+    window.memoryWallRequestExport = save;
+    document.fonts.ready.then(() => { statusEl.textContent = `空白画布 ${board.canvasWidth}×${board.canvasHeight}`; post('ready', { fontReady: true, fontFamily: FONT }, true); resizeCanvas(); }).catch(error => post('error', { message: String(error) }, false));
+    resizeCanvas();
   </script>
 </body>
 </html>

@@ -2,6 +2,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 configuration="${CONFIGURATION:-release}"
+
+[ -s Sources/MemoryWallEditorBridge/Resources/Editor/index.html ] || { echo "missing editor index" >&2; exit 1; }
+[ -s Sources/MemoryWallEditorBridge/Resources/Fonts/LXGWWenKai-Regular.ttf ] || { echo "missing LXGW WenKai font" >&2; exit 1; }
+./script/build_editor_assets.sh >/dev/null
 swift build --product DesktopMemoryWallApp -c "$configuration"
 bin_dir="$(swift build --show-bin-path -c "$configuration")"
 app_dir=".build/app/DesktopMemoryWallApp.app"

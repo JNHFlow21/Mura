@@ -1,13 +1,13 @@
 # Desktop Memory Wall Architecture
 
-Desktop Memory Wall is a native macOS SwiftPM project that renders an editable board into a static wallpaper image. The core design intentionally rejects always-on overlays and live web wallpapers: after save, the WebView/editor is released and macOS displays a normal PNG wallpaper.
+Desktop Memory Wall is a native macOS SwiftPM project that exports an editable finite board into a static wallpaper image. The core design intentionally rejects always-on overlays and live web wallpapers: after save or cancel, the WebView/editor is released and macOS displays a normal PNG wallpaper.
 
 ## Modules
 
-- `MemoryWallCore`: portable board, element, display, preferences, and template models.
-- `MemoryWallWorkspace`: local file workspace, board store, template store, snapshots, and audit log.
-- `MemoryWallEditorBridge`: narrow WKWebView bridge plus bundled local editor asset.
-- `MemoryWallRenderer`: AppKit PNG renderer with explicit render budgets.
+- `MemoryWallCore`: portable board, element, display, and preference models.
+- `MemoryWallWorkspace`: local file workspace, board store, snapshots, and audit log.
+- `MemoryWallEditorBridge`: narrow WKWebView bridge plus bundled local canvas editor and font assets.
+- `MemoryWallRenderer`: AppKit fallback PNG renderer with explicit render budgets.
 - `MemoryWallWallpaper`: display discovery, wallpaper apply/restore boundary, hotkey facade.
 - `MemoryWallAgentTools`: primitive command registry used by `dmwctl`.
 - `DesktopMemoryWallApp`: thin SwiftUI menu bar shell and foreground edit window.
@@ -15,8 +15,8 @@ Desktop Memory Wall is a native macOS SwiftPM project that renders an editable b
 ## Runtime Loop
 
 1. UI or `dmwctl` loads the same active board JSON from the workspace.
-2. Edit mode uses the bundled local editor surface and a native text panel for large reminders.
-3. Save persists the board, renders a display-sized PNG, records wallpaper snapshot metadata, and applies the image through `NSWorkspace`.
+2. Edit mode opens a blank finite canvas with minimal tools: select, text, pen, eraser, undo/redo, save, cancel.
+3. Save receives board JSON plus PNG bytes from the web editor, persists both, records wallpaper snapshot metadata, and applies the PNG through `NSWorkspace`.
 4. Idle state keeps only the lightweight menu bar app and file workspace; no editor WebView is needed.
 
 ## Workspace Contract
@@ -30,7 +30,6 @@ renders/latest-wallpaper.png
 renders/previews/*.png
 snapshots/boards/*.json
 snapshots/wallpapers/*.json
-templates/*.json
 logs/audit.jsonl
 docs/agent/context.md
 ```

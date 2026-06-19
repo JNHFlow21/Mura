@@ -8,15 +8,16 @@ Owner: local user / agent operating the machine. Window: first 24 hours of norma
 
 ## Healthy Signals
 
-- `dmwctl diagnostics --json` returns `ok: true` and reports the expected workspace path.
-- `renders/latest-wallpaper.png` or `renders/previews/*.png` exist after render commands.
+- Edit mode opens a blank warm off-white finite canvas, not a prefilled planner template.
+- `dmwctl diagnostics --json` returns `ok: true` and reports editor/font readiness.
+- `renders/latest-wallpaper.png` or `renders/previews/*.png` exist after save/render commands.
 - `logs/audit.jsonl` receives `board.save`, `render.preview`, `wallpaper.apply`, and `wallpaper.restore` events as actions are used.
 - Activity Monitor shows near-zero CPU while idle and no edit window is open.
 
 ## Failure Signals
 
-- Editor window cannot load local `index.html` asset.
-- `wallpaper apply` fails or applies the wrong image size.
+- Editor window cannot load local `index.html` or `LXGWWenKai-Regular.ttf` asset.
+- Save applies a PNG with dimensions that do not match the active display.
 - `wallpaper restore` cannot find a snapshot after a successful apply.
 - App retains an editor window/WebView after save/cancel.
 

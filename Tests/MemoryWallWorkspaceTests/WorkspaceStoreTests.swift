@@ -3,13 +3,16 @@ import MemoryWallCore
 @testable import MemoryWallWorkspace
 
 final class WorkspaceStoreTests: XCTestCase {
-    func testEnsureWorkspaceCreatesHumanReadableFiles() throws {
+    func testEnsureWorkspaceCreatesBlankHumanReadableFiles() throws {
         let layout = tempLayout()
         let store = FileBoardStore(layout: layout)
         try store.ensureWorkspace()
         XCTAssertTrue(FileManager.default.fileExists(atPath: layout.activeBoardURL.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: layout.contextURL.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: layout.auditLogURL.path))
+        let board = try store.loadActiveBoard()
+        XCTAssertEqual(board.elements.count, 0)
+        XCTAssertNil(board.metadata.activeTemplateID)
     }
 
     func testSaveAndLoadActiveBoardPreservesUnknownFields() throws {

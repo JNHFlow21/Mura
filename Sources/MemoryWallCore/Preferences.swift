@@ -8,7 +8,7 @@ public struct MemoryWallPreferences: Codable, Equatable, Sendable {
     public var hotkeyDescription: String
     public var renderElementLimit: Int
 
-    public init(defaultFontSize: Double = 92, titleFontSize: Double = 128, fontFamily: String = "Virgil", backgroundColor: String = "#fff8df", hotkeyDescription: String = "⌥⌘B", renderElementLimit: Int = 250) {
+    public init(defaultFontSize: Double = MemoryWallDefaults.defaultFontSize, titleFontSize: Double = MemoryWallDefaults.titleFontSize, fontFamily: String = MemoryWallDefaults.fontFamily, backgroundColor: String = MemoryWallDefaults.backgroundColor, hotkeyDescription: String = "⌥⌘B", renderElementLimit: Int = 250) {
         self.defaultFontSize = defaultFontSize
         self.titleFontSize = titleFontSize
         self.fontFamily = fontFamily

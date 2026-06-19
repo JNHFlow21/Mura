@@ -11,7 +11,6 @@ final class AppStateStore: ObservableObject {
     @Published var board: BoardDocument = .defaultMemoryWall()
     @Published var preferences = MemoryWallPreferences()
     @Published var isEditorPresented = false
-    @Published var draftText = ""
     @Published var statusMessage = "Ready"
     @Published var lastError: String?
 
@@ -44,7 +43,6 @@ final class AppStateStore: ObservableObject {
             try boardStore.ensureWorkspace()
             board = try boardStore.loadActiveBoard()
             preferences = try boardStore.loadPreferences()
-            draftText = board.elements.filter { $0.type == .text }.map(\.text).joined(separator: "\n")
             statusMessage = "Workspace ready"
             lastError = nil
         } catch {
@@ -55,9 +53,39 @@ final class AppStateStore: ObservableObject {
     func openEditor() {
         if !isEditorPresented {
             reload()
+            prepareBlankBoardForActiveDisplayIfNeeded()
             isEditorPresented = true
             NSApp.activate(ignoringOtherApps: true)
         }
+    }
+
+    private func prepareBlankBoardForActiveDisplayIfNeeded() {
+        let display = displayService.mainDisplay()
+        var shouldSave = false
+        var next = board
+        if next.metadata.activeTemplateID != nil && looksLikeStarterTemplate(next) {
+            next = .blank(display: display)
+            shouldSave = true
+        } else if next.elements.isEmpty && (next.canvasWidth != display.width || next.canvasHeight != display.height || next.metadata.displayProfile != display) {
+            next = .blank(display: display)
+            shouldSave = true
+        } else if next.canvasWidth != display.width || next.canvasHeight != display.height || next.metadata.displayProfile != display {
+            next.retargetCanvas(to: display, preserveElements: true)
+            shouldSave = true
+        }
+        if shouldSave {
+            do {
+                try boardStore.saveActiveBoard(next, actor: "app", reason: "editor.prepare.blank-canvas")
+                board = next
+            } catch {
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    private func looksLikeStarterTemplate(_ candidate: BoardDocument) -> Bool {
+        let starterFragments = ["今天只做", "别忘：", "今天最重要", "等待："]
+        return candidate.elements.contains { element in starterFragments.contains { element.text.contains($0) } }
     }
 
     func cancelEditor() {
@@ -66,22 +94,40 @@ final class AppStateStore: ObservableObject {
         statusMessage = "Edit cancelled"
     }
 
-    func saveDraftAndApplyWallpaper() {
+    func handleEditorMessage(_ message: EditorBridgeMessage) {
+        switch message.kind {
+        case .ready:
+            statusMessage = "Canvas ready"
+            lastError = nil
+        case .boardChanged:
+            statusMessage = "Editing canvas"
+        case .exportPNG:
+            saveExportAndApplyWallpaper(message)
+        case .cancel:
+            cancelEditor()
+        case .error:
+            lastError = message.payload["message"]?.stringValue ?? "Editor reported an unknown error"
+            statusMessage = "Editor error"
+        }
+    }
+
+    func saveExportAndApplyWallpaper(_ message: EditorBridgeMessage) {
         do {
-            var newBoard = board
-            let lines = draftText.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-            newBoard.elements = lines.enumerated().map { index, line in
-                let isTitle = index == 0
-                return BoardElement(x: isTitle ? 120 : 160, y: isTitle ? 105 : 330 + Double(index - 1) * 140, width: 1500, height: isTitle ? 170 : 120, text: line, fontSize: isTitle ? preferences.titleFontSize : preferences.defaultFontSize, strokeColor: line.contains("别忘") ? "#b91c1c" : "#111827")
-            }.filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            if newBoard.elements.isEmpty { newBoard = .defaultMemoryWall() }
-            try boardStore.saveActiveBoard(newBoard, actor: "app", reason: "editor.save")
-            board = newBoard
+            guard var exportedBoard = message.board else { throw EditorBridgeError.invalidMessage("exportPNG did not include board JSON") }
+            guard let dataURL = message.pngDataURL else { throw EditorBridgeError.invalidPNGPayload("Missing pngDataURL") }
+            let pngData = try EditorExportCodec.pngData(fromDataURL: dataURL)
             let display = displayService.mainDisplay()
-            let output = try renderer.render(RenderJob(board: newBoard, display: display, outputURL: layout.latestRenderURL, purpose: .wallpaper))
+            exportedBoard.metadata.activeTemplateID = nil
+            exportedBoard.metadata.displayProfile = DisplayProfile(id: display.id, name: display.name, width: exportedBoard.canvasWidth, height: exportedBoard.canvasHeight, scale: display.scale, isMain: display.isMain)
+            exportedBoard.backgroundColor = exportedBoard.backgroundColor.isEmpty ? preferences.backgroundColor : exportedBoard.backgroundColor
+            try boardStore.saveActiveBoard(exportedBoard, actor: "app", reason: "editor.canvas-export")
+            try layout.ensureDirectories()
+            try pngData.write(to: layout.latestRenderURL, options: [.atomic])
+            let output = RenderOutput(fileURL: layout.latestRenderURL, width: exportedBoard.canvasWidth, height: exportedBoard.canvasHeight, purpose: .wallpaper, byteCount: pngData.count)
             _ = try wallpaperService.apply(render: output, display: display, confirm: true, actor: "app")
+            board = exportedBoard
             isEditorPresented = false
-            statusMessage = "Saved and applied wallpaper"
+            statusMessage = "Saved canvas and applied wallpaper"
             lastError = nil
         } catch {
             lastError = error.localizedDescription

@@ -1,57 +1,79 @@
-# Mura
+<p align="center">
+  <img src="docs/images/mura-logo.png" width="112" height="112" alt="Mura logo">
+</p>
 
-A lightweight macOS menu bar app that turns a blank finite canvas into a static desktop wallpaper. Edit mode opens like a clean Excalidraw-style board: write text, doodle with the pen, erase or move elements, then save the exact canvas pixels as the wallpaper. After save/cancel, the editor WebView is released so idle cost stays low.
+<h1 align="center">Mura</h1>
 
+<p align="center">
+  把一块有限画布，变成你的桌面壁纸。
+</p>
 
-## Download and install
+<p align="center">
+  <a href="https://github.com/JNHFlow21/Mura/releases/latest"><strong>下载最新版</strong></a>
+</p>
 
-Download `Mura-v1.dmg` from the GitHub Release, open it, and drag `Mura.app` into `/Applications`.
+![Mura editor screenshot](docs/images/mura-editor.png)
 
-This v1 build is ad-hoc signed only and is not Apple notarized yet. If macOS says the app is damaged, cannot be opened, or the developer cannot be verified, install it first and then run:
+## Mura 是什么？
+
+Mura 是一个很简单的 macOS 小工具：
+
+> 你打开一块有限画布，在上面写字、涂鸦，然后把它保存成桌面壁纸。
+
+它适合放那些你每天打开电脑就应该看见的东西：
+
+- 今天最重要的几件事
+- 一句提醒自己的话
+- 一个随手画下来的箭头、圈、线条
+- 不同屏幕上的不同提示
+
+Mura 不想做复杂的任务管理软件。它只做一件事：**让你的桌面本身变成一块提醒画布。**
+
+## 你可以做什么？
+
+### 写下今天最重要的事情
+
+用文字工具直接在画布上输入，保存后就是你的桌面壁纸。
+
+### 随手涂鸦
+
+用画笔画线、圈重点、加箭头，也可以用颜色区分不同提醒。
+
+![Mura color palette screenshot](docs/images/mura-colors.png)
+
+### 保存到桌面
+
+点击「保存到桌面」后，Mura 会把当前画布渲染成一张静态壁纸。保存完不需要一直占用一个编辑器窗口。
+
+## 安装
+
+1. 打开 [Releases](https://github.com/JNHFlow21/Mura/releases/latest)。
+2. 下载 `Mura-v1.dmg`。
+3. 打开 DMG，把 `Mura.app` 拖进 `/Applications`。
+4. 启动 Mura。
+
+## 如果 macOS 提示无法打开
+
+当前 v1 是未上架 App Store、未 Apple notarize 的版本，所以 macOS 可能会提示：
+
+- “无法打开，因为无法验证开发者”
+- “Apple 无法检查其是否包含恶意软件”
+- “App 已损坏，无法打开”
+
+如果你确认 App 是从本仓库 Release 下载的，可以安装到 `/Applications` 后运行：
 
 ```bash
 sudo xattr -rd com.apple.quarantine /Applications/Mura.app
 open /Applications/Mura.app
 ```
 
-Only run the command for a `Mura.app` downloaded from the official GitHub Release.
+只建议对从官方 Release 下载的 `Mura.app` 执行这个命令。
 
-## Build and test
+## 隐私
 
-```bash
-script/build_editor_assets.sh
-npm --prefix EditorWeb test
-swift test
-swift build
-script/package_app.sh
-script/package_dmg.sh v1
-```
+Mura 是本地优先的桌面工具。画布内容保存在你的 Mac 本地，不需要账号，也不会上传你的提醒内容。
 
-Packaged app output:
+## 下载
 
-```text
-.build/app/Mura.app
-dist/Mura-v1.dmg
-```
-
-## Agent CLI
-
-```bash
-swift run dmwctl status --json
-swift run dmwctl board blank --width 1920 --height 1080 --json
-swift run dmwctl board patch --text "今天先完成最重要的一件事" --x 120 --y 120 --json
-swift run dmwctl board stroke --points "120,240;240,300;360,260" --json
-swift run dmwctl render preview --width 1920 --height 1080 --json
-swift run dmwctl render preview --wallpaper --json
-swift run dmwctl wallpaper apply --confirm --json
-swift run dmwctl wallpaper restore --confirm --json
-```
-
-Use `--workspace /path/to/workspace` to test without touching the default app support workspace.
-
-## Product shape
-
-- First launch is blank: no planner template and no prefilled text.
-- The board stores finite desktop-pixel dimensions (`canvasWidth`, `canvasHeight`).
-- Text uses bundled LXGW WenKai for Chinese, English, and digits.
-- The app save path uses the editor-exported PNG as the wallpaper source of truth.
+- [下载 Mura-v1.dmg](https://github.com/JNHFlow21/Mura/releases/latest/download/Mura-v1.dmg)
+- [查看所有 Release](https://github.com/JNHFlow21/Mura/releases)

@@ -52,6 +52,14 @@ for bundle in "$bin_dir"/Mura_*.bundle; do
 </dict></plist>
 BUNDLE_PLIST
 done
-xattr -cr "$app_dir"
-codesign --force --deep --sign - "$app_dir" >/dev/null 2>&1 || true
+sanitize_bundle_xattrs() {
+  find "$app_dir" -exec xattr -d com.apple.FinderInfo {} \; 2>/dev/null || true
+  find "$app_dir" -exec xattr -d com.apple.ResourceFork {} \; 2>/dev/null || true
+  find "$app_dir" -exec xattr -d com.apple.quarantine {} \; 2>/dev/null || true
+  find "$app_dir" -exec xattr -d com.apple.provenance {} \; 2>/dev/null || true
+  xattr -d com.apple.FinderInfo "$app_dir" 2>/dev/null || true
+}
+sanitize_bundle_xattrs
+codesign --force --deep --sign - "$app_dir" >/dev/null
+sanitize_bundle_xattrs
 echo "$PWD/$app_dir"

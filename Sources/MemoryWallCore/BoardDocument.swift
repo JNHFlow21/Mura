@@ -6,13 +6,22 @@ public struct BoardMetadata: Codable, Equatable, Sendable {
     public var updatedAt: Date
     public var activeTemplateID: String?
     public var displayProfile: DisplayProfile
+    public var editorPreferences: [String: JSONValue]?
 
-    public init(title: String, createdAt: Date = Date(), updatedAt: Date = Date(), activeTemplateID: String? = nil, displayProfile: DisplayProfile = .fallback) {
+    public init(
+        title: String,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        activeTemplateID: String? = nil,
+        displayProfile: DisplayProfile = .fallback,
+        editorPreferences: [String: JSONValue]? = nil
+    ) {
         self.title = title
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.activeTemplateID = activeTemplateID
         self.displayProfile = displayProfile
+        self.editorPreferences = editorPreferences
     }
 }
 

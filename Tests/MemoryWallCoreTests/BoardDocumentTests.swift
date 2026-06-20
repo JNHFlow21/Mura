@@ -64,4 +64,20 @@ final class BoardDocumentTests: XCTestCase {
         let decoded = try JSONDecoder().decode(BoardDocument.self, from: data)
         XCTAssertEqual(decoded.rawExcalidraw["future"], board.rawExcalidraw["future"])
     }
+
+    func testPreservesEditorPreferencesInMetadata() throws {
+        var board = BoardDocument.defaultMemoryWall()
+        board.metadata.editorPreferences = [
+            "penColor": .string("#b91c1c"),
+            "textColor": .string("#2563eb"),
+            "recentColors": .array([.string("#b91c1c"), .string("#2563eb")])
+        ]
+
+        let data = try JSONEncoder().encode(board)
+        let decoded = try JSONDecoder().decode(BoardDocument.self, from: data)
+
+        XCTAssertEqual(decoded.metadata.editorPreferences?["penColor"], .string("#b91c1c"))
+        XCTAssertEqual(decoded.metadata.editorPreferences?["textColor"], .string("#2563eb"))
+        XCTAssertEqual(decoded.metadata.editorPreferences?["recentColors"], .array([.string("#b91c1c"), .string("#2563eb")]))
+    }
 }

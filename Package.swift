@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "DesktopMemoryWall",
+    name: "Mura",
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "MemoryWallCore", targets: ["MemoryWallCore"]),
@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "MemoryWallWallpaper", targets: ["MemoryWallWallpaper"]),
         .library(name: "MemoryWallEditorBridge", targets: ["MemoryWallEditorBridge"]),
         .library(name: "MemoryWallAgentTools", targets: ["MemoryWallAgentTools"]),
-        .executable(name: "DesktopMemoryWallApp", targets: ["DesktopMemoryWallApp"]),
+        .executable(name: "Mura", targets: ["DesktopMemoryWallApp"]),
         .executable(name: "dmwctl", targets: ["dmwctl"])
     ],
     targets: [

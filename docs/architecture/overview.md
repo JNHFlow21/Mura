@@ -1,6 +1,6 @@
-# Desktop Memory Wall Architecture
+# Mura Architecture
 
-Desktop Memory Wall is a native macOS SwiftPM project that exports an editable finite board into a static wallpaper image. The core design intentionally rejects always-on overlays and live web wallpapers: after save or cancel, the WebView/editor is released and macOS displays a normal PNG wallpaper.
+Mura is a native macOS SwiftPM project that exports an editable finite board into a static wallpaper image. The core design intentionally rejects always-on overlays and live web wallpapers: after save or cancel, the WebView/editor is released and macOS displays a normal PNG wallpaper.
 
 ## Modules
 

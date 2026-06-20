@@ -2,7 +2,7 @@ import Foundation
 
 public enum MemoryWallDefaults {
     public static let schemaVersion = 2
-    public static let title = "Desktop Memory Wall"
+    public static let title = "Mura"
     public static let fontFamily = "LXGW WenKai"
     public static let backgroundColor = "#fff8df"
     public static let inkColor = "#111827"

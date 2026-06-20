@@ -44,7 +44,7 @@ public final class ToolRegistry {
             case "board": return try board(args)
             case "render": return try render(args)
             case "wallpaper": return try wallpaper(args)
-            case "templates", "template": return .failure("Templates were removed from Desktop Memory Wall v2. Use `board blank`, `board patch --text --x --y`, or `board stroke --points`.")
+            case "templates", "template": return .failure("Templates were removed from Mura v2. Use `board blank`, `board patch --text --x --y`, or `board stroke --points`.")
             case "audit": return try audit(args)
             default: throw ToolRegistryError.unknownCommand(command)
             }

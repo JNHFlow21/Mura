@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-if [ ! -x .build/app/DesktopMemoryWallApp.app/Contents/MacOS/DesktopMemoryWallApp ]; then
+if [ ! -x .build/app/Mura.app/Contents/MacOS/Mura ]; then
   script/package_app.sh >/dev/null
 fi
+pkill -x Mura || true
 pkill -x DesktopMemoryWallApp || true
 sleep 1
-/usr/bin/open -n "$PWD/.build/app/DesktopMemoryWallApp.app"
+/usr/bin/open -n "$PWD/.build/app/Mura.app"
 sleep 1
-pgrep -x DesktopMemoryWallApp >/dev/null
-echo "Opened $PWD/.build/app/DesktopMemoryWallApp.app"
+pgrep -x Mura >/dev/null
+echo "Opened $PWD/.build/app/Mura.app"

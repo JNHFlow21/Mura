@@ -1,4 +1,4 @@
-# Desktop Memory Wall
+# Mura
 
 A lightweight macOS menu bar app that turns a blank finite canvas into a static desktop wallpaper. Edit mode opens like a clean Excalidraw-style board: write text, doodle with the pen, erase or move elements, then save the exact canvas pixels as the wallpaper. After save/cancel, the editor WebView is released so idle cost stays low.
 
@@ -15,7 +15,7 @@ script/package_app.sh
 Packaged app output:
 
 ```text
-.build/app/DesktopMemoryWallApp.app
+.build/app/Mura.app
 ```
 
 ## Agent CLI

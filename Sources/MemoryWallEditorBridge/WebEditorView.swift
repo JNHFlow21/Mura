@@ -96,7 +96,7 @@ public struct WebEditorView: NSViewRepresentable {
     }
 
     public static let fallbackHTML = """
-    <!doctype html><meta charset='utf-8'><body style='font-family: system-ui; background:#fff8df;'><h1>Desktop Memory Wall</h1><p>Editor asset missing; rebuild app resources.</p></body>
+    <!doctype html><meta charset='utf-8'><body style='font-family: system-ui; background:#fff8df;'><h1>Mura</h1><p>Editor asset missing; rebuild app resources.</p></body>
     """
 }
 

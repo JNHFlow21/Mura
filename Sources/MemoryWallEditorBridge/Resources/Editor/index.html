@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Desktop Memory Wall Canvas</title>
+  <title>Mura Canvas</title>
   <style>
     @font-face {
       font-family: "LXGW WenKai";
@@ -319,7 +319,7 @@
 <body>
   <div id="app">
     <div id="toolbar">
-      <span class="brand">Memory Wall</span>
+      <span class="brand">Mura</span>
       <button data-tool="select" class="toolButton active" title="选择" aria-label="选择">
         <svg class="toolbarIcon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M8 12.5V6.8a1.4 1.4 0 0 1 2.8 0v5.1" />
@@ -456,7 +456,7 @@
       const profile = display || { id: 'main', name: 'Main Display', width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT, scale: 1, isMain: true };
       return {
         id: uuid(), schemaVersion: 2,
-        metadata: { title: 'Desktop Memory Wall', createdAt: nowISO(), updatedAt: nowISO(), activeTemplateID: null, displayProfile: profile, editorPreferences: defaultEditorPreferences() },
+        metadata: { title: 'Mura', createdAt: nowISO(), updatedAt: nowISO(), activeTemplateID: null, displayProfile: profile, editorPreferences: defaultEditorPreferences() },
         canvasWidth: Number(profile.width || DEFAULT_WIDTH), canvasHeight: Number(profile.height || DEFAULT_HEIGHT), backgroundColor: DEFAULT_BG,
         elements: [], appState: { viewBackgroundColor: DEFAULT_BG, currentItemFontFamily: FONT, theme: 'light' }, files: {}, rawExcalidraw: { type: 'desktop-memory-wall-canvas', version: 2 }
       };

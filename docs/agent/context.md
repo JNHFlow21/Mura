@@ -1,4 +1,4 @@
-# Desktop Memory Wall Agent Context
+# Mura Agent Context
 
 The user wants a local, lightweight desktop memory surface: it should feel like moving a clean Excalidraw whiteboard onto the wallpaper, but it must not keep a live web wallpaper or heavy overlay running while idle.
 

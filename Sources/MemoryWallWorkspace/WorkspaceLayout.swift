@@ -88,7 +88,7 @@ public enum BoardCodec {
 }
 
 private let defaultAgentContext = """
-# Desktop Memory Wall Agent Context
+# Mura Agent Context
 
 - Keep reminders extremely large and readable from desktop distance.
 - Prefer a hand-drawn Excalidraw-like feel: warm paper background, dark ink, minimal color accents.

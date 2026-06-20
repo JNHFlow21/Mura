@@ -6,12 +6,12 @@ struct DesktopMemoryWallApp: App {
     @StateObject private var store = AppStateStore()
 
     var body: some Scene {
-        MenuBarExtra("Memory Wall", systemImage: "rectangle.and.pencil.and.ellipsis") {
+        MenuBarExtra("Mura", image: "MuraMenuBarIcon") {
             MenuBarSceneContent(store: store)
         }
         .menuBarExtraStyle(.menu)
 
-        Window("Desktop Memory Wall", id: "editor") {
+        Window("Mura", id: "editor") {
             EditWindowScene(store: store)
                 .onAppear { store.isEditorPresented = true }
         }

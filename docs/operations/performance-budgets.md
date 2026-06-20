@@ -1,6 +1,6 @@
 # Performance Budgets
 
-Desktop Memory Wall is designed for near-zero idle cost by exporting only on explicit save/preview/apply events.
+Mura is designed for near-zero idle cost by exporting only on explicit save/preview/apply events.
 
 | State | Budget / expectation |
 |---|---|

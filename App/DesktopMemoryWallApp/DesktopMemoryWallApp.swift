@@ -6,8 +6,10 @@ struct DesktopMemoryWallApp: App {
     @StateObject private var store = AppStateStore()
 
     var body: some Scene {
-        MenuBarExtra("Mura", image: "MuraMenuBarIcon") {
+        MenuBarExtra {
             MenuBarSceneContent(store: store)
+        } label: {
+            MenuBarSceneLabel(store: store)
         }
         .menuBarExtraStyle(.menu)
 
@@ -25,4 +27,9 @@ struct DesktopMemoryWallApp: App {
 
 enum EditorWindowMetrics {
     static let fixedFrameSize = CGSize(width: 1295, height: 719)
+    static let windowIdentifier = "MuraEditorWindow"
+}
+
+extension Notification.Name {
+    static let muraOpenEditorRequested = Notification.Name("MuraOpenEditorRequested")
 }

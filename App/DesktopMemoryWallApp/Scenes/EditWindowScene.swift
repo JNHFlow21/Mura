@@ -52,6 +52,7 @@ private struct FixedEditorWindowConfigurator: NSViewRepresentable {
 
     private func configure(_ window: NSWindow?) {
         guard let window else { return }
+        window.identifier = NSUserInterfaceItemIdentifier(EditorWindowMetrics.windowIdentifier)
         let target = EditorWindowMetrics.fixedFrameSize
         let current = window.frame
         let targetFrame = NSRect(

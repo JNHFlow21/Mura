@@ -33,6 +33,14 @@ test('color palette behavior is tool-aware', () => {
   assert.match(editorHTML, /if \(isDeleteKey\(event\) && tool === 'select' && selectedId\)/);
 });
 
+test('choosing a color keeps the palette open', () => {
+  const applyStart = editorHTML.indexOf('function applyEditorColor');
+  const nextFunction = editorHTML.indexOf('function renderDisplayRail', applyStart);
+  const applyBody = editorHTML.slice(applyStart, nextFunction);
+  assert.doesNotMatch(applyBody, /closeColorPalette\(\)/);
+  assert.match(applyBody, /updateColorControls\(\)/);
+});
+
 test('color preferences persist through board metadata', () => {
   assert.match(editorHTML, /metadata\.editorPreferences/);
   assert.match(editorHTML, /function defaultEditorPreferences/);

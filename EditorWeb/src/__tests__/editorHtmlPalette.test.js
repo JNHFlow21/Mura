@@ -15,8 +15,13 @@ test('places compact color control between eraser and undo', () => {
   assert.ok(colorIndex > eraserIndex, 'color button follows eraser');
   assert.ok(undoIndex > colorIndex, 'undo follows color button');
   assert.match(editorHTML, /id="colorPalette"/);
-  assert.match(editorHTML, /id="customColorInput" type="color"/);
+  assert.ok(editorHTML.indexOf('class="paletteHeader"') < editorHTML.indexOf('id="swatchGrid"'), 'more color entry is anchored in the palette header');
+  assert.match(editorHTML, /id="moreSwatchGrid"/);
   assert.match(editorHTML, /const COLOR_PRESETS = \[/);
+  assert.match(editorHTML, /const MORE_COLOR_PRESETS = \[/);
+  assert.match(editorHTML, /grid-template-columns: repeat\(10, 18px\)/);
+  assert.match(editorHTML, /function morePaletteColors/);
+  assert.doesNotMatch(editorHTML, /type="color"/);
 });
 
 test('color palette behavior is tool-aware', () => {

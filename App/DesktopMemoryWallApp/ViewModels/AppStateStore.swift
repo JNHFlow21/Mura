@@ -24,6 +24,7 @@ final class AppStateStore: ObservableObject {
     let displayService: AppKitDisplayService
     let wallpaperService: WallpaperService
     let hotkeyService: any HotkeyServicing
+    private var didRunStartupCleanup = false
 
     init(layout: WorkspaceLayout = .default()) {
         self.layout = layout
@@ -48,6 +49,7 @@ final class AppStateStore: ObservableObject {
             board = try boardStore.loadActiveBoard()
             preferences = try boardStore.loadPreferences()
             refreshDisplays()
+            cleanupWorkspaceOnStartupIfNeeded()
             statusMessage = "Workspace ready"
             lastError = nil
         } catch {
@@ -198,6 +200,7 @@ final class AppStateStore: ObservableObject {
             try pngData.write(to: appliedWallpaperURL, options: [.atomic])
             let output = RenderOutput(fileURL: appliedWallpaperURL, width: exportedBoard.canvasWidth, height: exportedBoard.canvasHeight, purpose: .wallpaper, byteCount: pngData.count)
             _ = try wallpaperService.apply(render: output, display: display, confirm: true, actor: "app")
+            cleanupWorkspace(protecting: [appliedWallpaperURL, layout.latestRenderURL])
             board = exportedBoard
             editorBoard = exportedBoard
             selectedDisplayID = display.id
@@ -217,6 +220,7 @@ final class AppStateStore: ObservableObject {
             let displaysByID = Dictionary(uniqueKeysWithValues: displays.map { ($0.id, $0) })
             try layout.ensureDirectories()
             var savedBoards: [String: BoardDocument] = [:]
+            var appliedWallpaperURLs: [URL] = []
             var appliedCount = 0
 
             for export in exports {
@@ -241,6 +245,7 @@ final class AppStateStore: ObservableObject {
                 }
                 let output = RenderOutput(fileURL: appliedWallpaperURL, width: exportedBoard.canvasWidth, height: exportedBoard.canvasHeight, purpose: .wallpaper, byteCount: pngData.count)
                 _ = try wallpaperService.apply(render: output, display: display, confirm: true, actor: "app")
+                appliedWallpaperURLs.append(appliedWallpaperURL)
                 savedBoards[display.id] = exportedBoard
                 appliedCount += 1
             }
@@ -253,6 +258,7 @@ final class AppStateStore: ObservableObject {
             editorBoardsByDisplayID = savedBoards
             editorBoard = selectedBoard
             self.selectedDisplayID = requestedSelectedDisplayID
+            cleanupWorkspace(protecting: appliedWallpaperURLs + [layout.latestRenderURL])
             statusMessage = "Saved \(appliedCount) display wallpaper\(appliedCount == 1 ? "" : "s")"
             lastError = nil
         } catch {
@@ -292,6 +298,27 @@ final class AppStateStore: ObservableObject {
             lastError = nil
         } catch {
             lastError = error.localizedDescription
+        }
+    }
+
+    private func cleanupWorkspaceOnStartupIfNeeded() {
+        guard !didRunStartupCleanup else { return }
+        didRunStartupCleanup = true
+        cleanupWorkspace()
+    }
+
+    private func cleanupWorkspace(protecting urls: [URL] = []) {
+        do {
+            var protected = Set(urls.map { $0.standardizedFileURL })
+            for display in displays {
+                if let current = try? wallpaperService.backend.currentImageURL(for: display) {
+                    protected.insert(current.standardizedFileURL)
+                }
+            }
+            _ = try WorkspaceMaintenance(layout: layout).prune(additionalProtectedURLs: protected)
+        } catch {
+            // Workspace cleanup is best-effort. It should never block opening the
+            // editor or applying the latest wallpaper.
         }
     }
 }
